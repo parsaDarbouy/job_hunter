@@ -1,8 +1,48 @@
+# Virtual environments
 .venv/
+venv/
+env/
+
+# Bytecode / caches
 __pycache__/
 *.py[cod]
-*.egg-info/
+*$py.class
+*.so
+.mypy_cache/
+.ruff_cache/
 .pytest_cache/
-resume.yaml
+.hypothesis/
+.nox/
+.tox/
+
+# Packaging / build
+*.egg
+*.egg-info/
+.eggs/
 dist/
 build/
+pip-wheel-metadata/
+
+# Tests / coverage
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Secrets (create locally; do not commit)
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+*.swp
+*~
+
+# Private resume sources and normalized output (any directory)
+resume.yaml
+resume.pdf
+
+# Generated data (keep tracked templates)
+data/*
+!data/.gitkeep
+!data/position.example.yaml

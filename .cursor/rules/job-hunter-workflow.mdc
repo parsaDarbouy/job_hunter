@@ -1,0 +1,37 @@
+---
+description: README sync, plan-before-code, naming/docs, minimal diffs
+alwaysApply: true
+---
+
+# Job Hunter — agent workflow and code standards
+
+Follow these in order. They apply to every task in this repository.
+
+## 1. Read README(s) before you act
+
+- **When:** At the **start** of each new user request (or before the first tool use for that request), not literally before every single shell command.
+- **What:** Find and read **all** project documentation named like a readme, for example `README.md`, `readme.md`, or `**/README*.md` under this repo.
+- **Why:** The readme is the source of truth for goals, setup, and architecture.
+- **If missing:** If no readme exists yet, treat the next substantive change as a chance to **add** a root `README.md` (purpose, how to run, layout) when you touch code—not as an excuse to skip reading later once it exists.
+
+## 2. Update README(s) when you finish
+
+- **When:** After you complete work for that request (implementation, refactors, or new commands/scripts the user should know about).
+- **What:** Bring readme(s) in line with reality: purpose, prerequisites, run/test commands, directory layout, and any behavior you changed.
+- **Scope:** Only update sections that are **wrong or incomplete** because of your work—no cosmetic rewrites.
+
+## 3. Plan first, implement after explicit approval
+
+- **Before writing or editing code** (or running destructive/generative commands), give a **short plan**: goal, main packages/files you will add or touch, function or type names you intend to introduce, and risks or open questions.
+- **Stop** and wait for the user to approve (or revise) the plan.
+- **Exception:** Read-only steps are fine without approval—e.g. searching the repo, reading files, answering questions—unless the user asked for code changes immediately.
+
+## 5. Names and documentation
+
+- **Names:** Use full, descriptive identifiers (`userApplicationRepository`, not `uar`). Avoid abbreviations unless they are universal in Go (`ctx`, `err`, `id`).
+- Do not add noise: no comments that restate the name; no exported symbols without a doc comment.
+
+## 6. Minimal, purposeful changes
+
+- Change only what the approved plan requires. No drive-by refactors, no new helpers “for later,” no formatting-only sweeps across unrelated files.
+- If a one-line fix solves the issue, do not expand scope.

@@ -1,0 +1,58 @@
+# Copy to position.yaml (or another path you pass to future commands) and edit.
+# Criteria for which roles count as a fit: location, compensation, seniority, titles.
+
+location_constraints:
+  # Jobs based in these countries (onsite, hybrid, or in-country remote).
+  countries_onsite_or_hybrid_ok:
+    - Canada
+  # Optional: narrow to specific metros. Leave empty to allow any city within the countries above.
+  # Use a stable string you can match in postings (e.g. "City, Province" or "City, Country").
+  cities_onsite_or_hybrid_ok:
+    - Toronto, ON, Canada
+    - Vancouver, BC, Canada
+  # If the employer is headquartered elsewhere, you still accept the role when you can
+  # work remotely from one of these countries (tax/legal eligibility is on you to verify).
+  remote_work_allowed_from_countries:
+    - Canada
+  # True if fully distributed / “work from anywhere” roles are acceptable.
+  globally_remote_acceptable: true
+  notes: >-
+    Example: require Canada as home base; allow global remote when the listing states
+    no country restriction.
+
+compensation:
+  currency: CAD
+  # Target total cash (or total comp—define what you mean in notes).
+  salary_expectation_annual: 150000
+  # Do not proceed below this unless you override manually.
+  minimum_acceptable_salary_annual: 130000
+  notes: >-
+    Use the same unit as job postings (often annual base). When a listing uses another
+    currency, convert amounts to `currency` with a rough ballpark rate—exact FX is not
+    required; an approximate conversion is enough before comparing to expectation and minimum.
+
+# Seniority bands you are open to (subset of your career stage).
+acceptable_seniority_levels:
+  - intern
+  - junior
+  - mid_level
+  - senior
+  - staff
+  - principal
+  - lead
+
+# Stated experience on the job posting (e.g. "3+ years" → minimum 3 and max null).
+# Set `maximum_stated_years` to null when there is no upper cap.
+acceptable_years_experience_on_job:
+  minimum_stated_years: 3
+  maximum_stated_years: null
+
+titles:
+  acceptable:
+    - Site Reliability Engineer
+    - DevOps Engineer
+    - Platform Engineer
+    - Infrastructure Engineer
+    - Cloud Engineer
+  not_acceptable:
+

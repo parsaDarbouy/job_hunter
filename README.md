@@ -1,6 +1,6 @@
 # Job Hunter
 
-Agentic job-hunting utilities. This repository starts with **resume ingestion**: turn a PDF resume into a normalized `resume.yaml` for downstream matching, ranking, and filtering agents.
+Agentic job-hunting utilities. This repository starts with **resume ingestion**: turn a PDF resume into a normalized `resume.yaml` for downstream matching, ranking, and filtering agents. **Position criteria** for the next pipeline stage live in YAML as well: copy `data/position.example.yaml` to a working file (for example `data/position.yaml`) and tune location (countries and cities), compensation (including cross-currency comparison), seniority, stated years-of-experience on postings, and title filters.
 
 ## Prerequisites
 
@@ -52,7 +52,7 @@ Gemini CLI loads project commands from `.gemini/commands/`. See `.gemini/command
 
 | Path | Role |
 |------|------|
-| `data/` | Default directory for CLI-generated files (gitignored contents; see `data/.gitkeep`) |
+| `data/` | Default directory for CLI-generated files (gitignored contents; see `data/.gitkeep`). Tracked template: `data/position.example.yaml` (copy and edit for your search constraints). |
 | `job_hunter/cli.py` | CLI entry (`resume:ingest`) |
 | `job_hunter/paths.py` | Shared default paths (`DATA_DIRECTORY`, etc.) |
 | `job_hunter/resume_ingest/pdf_loader.py` | PDF → text |
@@ -60,6 +60,8 @@ Gemini CLI loads project commands from `.gemini/commands/`. See `.gemini/command
 | `job_hunter/resume_ingest/resume_parser.py` | Gemini CLI subprocess + JSON extraction |
 | `job_hunter/resume_ingest/normalize.py` | Durations, dedupe, stable ordering |
 | `job_hunter/resume_ingest/yaml_writer.py` | Canonical YAML serialization |
+
+`.gitignore` also excludes typical Python noise (extra venv names, mypy/ruff/pytest caches, packaging outputs, coverage, `.env`, `.DS_Store`) and keeps **resume intake private**: `resume.pdf` and `resume.yaml` match in any folder, plus everything under `data/` except `data/.gitkeep` and `data/position.example.yaml`.
 
 ## Determinism and hallucinations
 

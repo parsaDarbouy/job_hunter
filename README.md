@@ -22,7 +22,7 @@ Ingest a PDF, extract structure with **Gemini CLI** (headless JSON mode), normal
 
 ```bash
 python3 -m job_hunter resume:ingest ./resume.pdf
-python3 -m job_hunter resume:ingest ./resume.pdf -o ./out/resume.yaml
+python3 -m job_hunter resume:ingest ./resume.pdf -o ./data/resume.yaml
 python3 -m job_hunter resume:ingest ./resume.pdf --debug
 python3 -m job_hunter resume:ingest ./resume.pdf --model flash
 ```
@@ -35,7 +35,7 @@ job-hunter resume:ingest ./resume.pdf
 
 **Stdout:** prints only the absolute path to the generated YAML (unless `--debug`).
 
-**Output file (default `./resume.yaml`):** machine-oriented schema:
+**Output file (default `./data/resume.yaml`):** machine-oriented schema:
 
 - `profile` (name, email, `links.github`, `links.linkedin`)
 - `summary` (`total_years_experience`, `domains`)
@@ -52,7 +52,9 @@ Gemini CLI loads project commands from `.gemini/commands/`. See `.gemini/command
 
 | Path | Role |
 |------|------|
+| `data/` | Default directory for CLI-generated files (gitignored contents; see `data/.gitkeep`) |
 | `job_hunter/cli.py` | CLI entry (`resume:ingest`) |
+| `job_hunter/paths.py` | Shared default paths (`DATA_DIRECTORY`, etc.) |
 | `job_hunter/resume_ingest/pdf_loader.py` | PDF → text |
 | `job_hunter/resume_ingest/text_cleaner.py` | Deterministic whitespace cleanup |
 | `job_hunter/resume_ingest/resume_parser.py` | Gemini CLI subprocess + JSON extraction |

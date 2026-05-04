@@ -6,6 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from job_hunter.paths import default_resume_yaml_path
 from job_hunter.resume_ingest.normalize import normalize_extracted_resume
 from job_hunter.resume_ingest.pdf_loader import load_pdf_text
 from job_hunter.resume_ingest.resume_parser import parse_resume_with_gemini_cli
@@ -56,8 +57,8 @@ def main(argv: list[str] | None = None) -> int:
         "-o",
         "--output",
         type=Path,
-        default=Path("resume.yaml"),
-        help="Output YAML path (default: ./resume.yaml)",
+        default=default_resume_yaml_path(),
+        help="Output YAML path (default: ./data/resume.yaml)",
     )
     ingest.add_argument(
         "--debug",

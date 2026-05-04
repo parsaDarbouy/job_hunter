@@ -10,7 +10,7 @@ If the user provided a path to a PDF resume, run this exact shell command from t
 python3 -m job_hunter resume:ingest PATH_TO_RESUME.pdf
 
 Optional flags:
-- `-o /path/to/resume.yaml` to change the output location
+- `-o /path/to/resume.yaml` to change the output location (default: `./data/resume.yaml`)
 - `--debug` for verbose diagnostics
 - `--model flash` (or another Gemini CLI model alias)
 

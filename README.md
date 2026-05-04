@@ -1,6 +1,8 @@
 # Job Hunter
 
-Agentic job-hunting utilities. This repository starts with **resume ingestion**: turn a PDF resume into a normalized `resume.yaml` for downstream matching, ranking, and filtering agents. **Position criteria** for the next pipeline stage live in YAML as well: copy `data/position.example.yaml` to a working file (for example `data/position.yaml`) and tune location (countries and cities), compensation (including cross-currency comparison), seniority, stated years-of-experience on postings, and title filters.
+Agentic job-hunting utilities. **Resume ingestion** turns a PDF resume into a normalized `resume.yaml`. **Listing export** reads `weblist.yaml` (job board sources) plus `position.yaml` (your filters), writes a machine-readable `query.yaml` plan (fetch URLs and title-matching matrix), pulls public listings where supported, filters rows against your position criteria, and saves matches to `jobs_export.csv`.
+
+Copy `data/position.example.yaml` → `data/position.yaml` and `data/weblist.example.yaml` → `data/weblist.yaml`, then edit boards, titles, and geography to match your search.
 
 ## Prerequisites
 
@@ -48,20 +50,49 @@ job-hunter resume:ingest ./resume.pdf
 
 Gemini CLI loads project commands from `.gemini/commands/`. See `.gemini/commands/resume-ingest.toml`.
 
+## Command: `listings:export`
+
+Build `data/query.yaml`, fetch jobs from configured **Greenhouse**, **Ashby**, and **Workable** public JSON (Workable uses the apply-site widget API for the account slug in `https://apply.workable.com/{slug}/`), filter using `position.yaml`, and write **`data/jobs_export.csv`** with columns `url`, `job_title`, `location`.
+
+```bash
+python3 -m job_hunter listings:export
+python3 -m job_hunter listings:export --weblist ./data/weblist.yaml --position ./data/position.yaml
+python3 -m job_hunter listings:export --query-output ./data/query.yaml --csv-output ./data/jobs_export.csv --debug
+```
+
+After `pip install -e .`, you can also run `job-hunter listings:export`.
+
+**Defaults:** `--weblist` prefers `./data/weblist.yaml` when it exists, otherwise `./data/weblist.example.yaml`. `--position` prefers `./data/position.yaml`, otherwise `./data/position.example.yaml`. **Stdout** prints the absolute path to the CSV (same pattern as `resume:ingest` printing the YAML path).
+
+**`query.yaml`:** metadata (input paths, timestamp, `csv_output_path`), `criteria_snapshot` (titles, geography, comp notes copied from `position.yaml`), `fetch_tasks` (one HTTP GET per concrete board after expansion, plus `enabled` / `request: null` when a source is turned off), and `title_query_matrix` (each expanded source × each acceptable title; custom career URLs use a manual-review strategy string).
+
+**`weblist.yaml` and coverage:** Greenhouse, Ashby, and Workable do **not** publish a public “list every customer worldwide” API. This tool instead **expands** each `sources` row into **one fetch task per company** using:
+
+- **Singles** (unchanged): `board_token`, `organization_slug`, `apply_account_slug`, or one `careers_page_url`.
+- **Inline lists**: `board_tokens`, `organization_slugs`, `apply_account_slugs`, or `careers_pages` (`[{url, display_name}, …]`).
+- **Registry files**: `board_tokens_registry`, `organization_slugs_registry`, `apply_account_slugs_registry`, or `careers_pages_registry` — YAML paths **relative to the weblist file**, or absolute paths, or **`package:filename.yaml`** for bundled lists under `job_hunter/job_listings/registries/` (see `data/weblist.example.yaml`).
+
+You can merge singles + lists + registry on one row; tokens are de-duplicated. For **custom career pages**, URLs are included in `query.yaml` for tracking; there is still **no automated HTML scrape** (fetch returns no rows until a fetcher exists). Set `enabled: false` on a row to skip expansion and HTTP for that block.
+
+**Filters today:** title allow / block lists and geography rules from `location_constraints`. Compensation ranges and seniority/YOE in `position.yaml` are captured in `criteria_snapshot` for transparency; they are not used to drop rows automatically when listings do not include structured pay.
+
 ## Layout
 
 | Path | Role |
 |------|------|
-| `data/` | Default directory for CLI-generated files (gitignored contents; see `data/.gitkeep`). Tracked template: `data/position.example.yaml` (copy and edit for your search constraints). |
-| `job_hunter/cli.py` | CLI entry (`resume:ingest`) |
-| `job_hunter/paths.py` | Shared default paths (`DATA_DIRECTORY`, etc.) |
+| `data/` | Default directory for CLI-generated files (gitignored contents; see `data/.gitkeep`). Tracked templates: `data/position.example.yaml`, `data/weblist.example.yaml`. Generated: `data/query.yaml`, `data/jobs_export.csv`, `data/resume.yaml`, etc. |
+| `job_hunter/cli.py` | CLI entry (`resume:ingest`, `listings:export`) |
+| `job_hunter/paths.py` | Shared default paths (`DATA_DIRECTORY`, default resume / weblist / position / query / CSV paths) |
+| `job_hunter/job_listings/` | Listing export: YAML plan, HTTP fetchers, filters, CSV writer |
+| `job_hunter/job_listings/registries/*.yaml` | Bundled example board lists (Greenhouse tokens, Ashby slugs, Workable slugs, career URLs) for `package:` weblist references |
+| `job_hunter/job_listings/weblist_expand.py` | Expands multi-company weblist rows before `query.yaml` and fetching |
 | `job_hunter/resume_ingest/pdf_loader.py` | PDF → text |
 | `job_hunter/resume_ingest/text_cleaner.py` | Deterministic whitespace cleanup |
 | `job_hunter/resume_ingest/resume_parser.py` | Gemini CLI subprocess + JSON extraction |
 | `job_hunter/resume_ingest/normalize.py` | Durations, dedupe, stable ordering |
 | `job_hunter/resume_ingest/yaml_writer.py` | Canonical YAML serialization |
 
-`.gitignore` also excludes typical Python noise (extra venv names, mypy/ruff/pytest caches, packaging outputs, coverage, `.env`, `.DS_Store`) and keeps **resume intake private**: `resume.pdf` and `resume.yaml` match in any folder, plus everything under `data/` except `data/.gitkeep` and `data/position.example.yaml`.
+`.gitignore` also excludes typical Python noise (extra venv names, mypy/ruff/pytest caches, packaging outputs, coverage, `.env`, `.DS_Store`) and keeps **resume intake private**: `resume.pdf` and `resume.yaml` match in any folder, plus everything under `data/` except `data/.gitkeep`, `data/position.example.yaml`, and `data/weblist.example.yaml`.
 
 ## Determinism and hallucinations
 

@@ -1,0 +1,29 @@
+# Copy to weblist.yaml and edit. Each ``*_registry`` row expands to one fetch task per company/URL.
+#
+# Vendors do not expose a public "list every customer" API — coverage comes from the bundled
+# registries (``package:...``), inline lists, and any extra YAML file you reference with a path
+# relative to this file's directory.
+
+sources:
+  - id: greenhouse_pack
+    kind: greenhouse
+    board_tokens_registry: package:greenhouse_boards.example.yaml
+
+  - id: ashby_pack
+    kind: ashby
+    organization_slugs_registry: package:ashby_organization_slugs.example.yaml
+
+  - id: workable_pack
+    kind: workable
+    apply_account_slugs_registry: package:workable_apply_slugs.example.yaml
+
+  - id: custom_career_pack
+    kind: custom_career_page
+    careers_pages_registry: package:career_pages.example.yaml
+
+  # Inline extras (merged with their own ids if you prefer single-board rows):
+  # - id: greenhouse_extra
+  #   kind: greenhouse
+  #   board_tokens:
+  #     - anthropic
+  #     - stripe

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "job-hunter"
 version = "0.1.0"
-description = "Agentic job-hunting toolkit: resume PDF ingestion via Gemini CLI"
+description = "Agentic job-hunting toolkit: resume PDF ingestion and job listing export"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -23,6 +23,9 @@ job-hunter = "job_hunter.cli:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["job_hunter*"]
+
+[tool.setuptools.package-data]
+"job_hunter.job_listings" = ["registries/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

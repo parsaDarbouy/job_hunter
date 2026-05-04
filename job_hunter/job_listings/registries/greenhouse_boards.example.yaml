@@ -1,0 +1,64 @@
+# Curated public Greenhouse board_token values (boards.greenhouse.io/{token}).
+# Add your own tokens here or in a separate file and point weblist at it — vendors do not
+# publish a single "all companies" directory, so coverage is always list-driven.
+
+board_tokens:
+  - anthropic
+  - stripe
+  - coinbase
+  - shopify
+  - dropbox
+  - twilio
+  - databricks
+  - figma
+  - auth0
+  - cloudflare
+  - okta
+  - zendesk
+  - datadog
+  - sentry
+  - hashicorp
+  - mozilla
+  - canva
+  - instacart
+  - doordash
+  - robinhood
+  - block
+  - square
+  - reddit
+  - lyft
+  - uber
+  - pinterest
+  - affirm
+  - plaid
+  - chime
+  - opendoor
+  - scaleai
+  - brex
+  - ramp
+  - notion
+  - webflow
+  - netlify
+  - vercel
+  - replit
+  - supabase
+  - temporal
+  - asana
+  - hubspot
+  - snowflake
+  - mongodb
+  - elastic
+  - gitlab
+  - atlassian
+  - adobe
+  - salesforce
+  - cisco
+  - amd
+  - nvidia
+  - qualtrics
+  - mixpanel
+  - intercom
+  - launchdarkly
+  - contentful
+  - miro
+  - airtable

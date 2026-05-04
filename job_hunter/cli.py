@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from job_hunter.paths import default_resume_yaml_path
+from job_hunter.paths import default_jobs_export_csv_path, default_query_yaml_path, default_resume_yaml_path
 from job_hunter.resume_ingest.normalize import normalize_extracted_resume
 from job_hunter.resume_ingest.pdf_loader import load_pdf_text
 from job_hunter.resume_ingest.resume_parser import parse_resume_with_gemini_cli
@@ -76,6 +76,54 @@ def main(argv: list[str] | None = None) -> int:
         help="Gemini CLI model alias or id (default: flash)",
     )
     ingest.set_defaults(func=_run_resume_ingest)
+
+    def _run_listings_export(arguments: argparse.Namespace) -> int:
+        from job_hunter.job_listings.run_listings_export import run_listings_export
+
+        csv_path = run_listings_export(
+            weblist_path=arguments.weblist,
+            position_path=arguments.position,
+            query_output_path=arguments.query_output,
+            csv_output_path=arguments.csv_output,
+            debug=arguments.debug,
+        )
+        print(csv_path)
+        return 0
+
+    listings = subparsers.add_parser(
+        "listings:export",
+        help="Build query.yaml from weblist + position, fetch boards, filter, write jobs_export.csv",
+    )
+    listings.add_argument(
+        "--weblist",
+        type=Path,
+        default=None,
+        help="Weblist YAML (default: data/weblist.yaml if it exists, else data/weblist.example.yaml)",
+    )
+    listings.add_argument(
+        "--position",
+        type=Path,
+        default=None,
+        help="Position criteria YAML (default: data/position.yaml if it exists, else data/position.example.yaml)",
+    )
+    listings.add_argument(
+        "--query-output",
+        type=Path,
+        default=None,
+        help=f"Output query plan YAML (default: {default_query_yaml_path()})",
+    )
+    listings.add_argument(
+        "--csv-output",
+        type=Path,
+        default=None,
+        help=f"Output CSV path (default: {default_jobs_export_csv_path()})",
+    )
+    listings.add_argument(
+        "--debug",
+        action="store_true",
+        help="Print per-source fetch diagnostics to stderr",
+    )
+    listings.set_defaults(func=_run_listings_export)
 
     namespace = parser.parse_args(argv)
     handler = getattr(namespace, "func", None)

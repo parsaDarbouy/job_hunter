@@ -1,0 +1,11 @@
+# Company career hubs you want in query.yaml (no automated HTML fetch yet — listed for review).
+
+careers_pages:
+  - url: https://careers.google.com/
+    display_name: Google Careers
+  - url: https://www.metacareers.com/
+    display_name: Meta Careers
+  - url: https://www.apple.com/careers/
+    display_name: Apple Careers
+  - url: https://careers.microsoft.com/
+    display_name: Microsoft Careers

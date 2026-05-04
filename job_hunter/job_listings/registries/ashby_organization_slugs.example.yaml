@@ -1,0 +1,24 @@
+# Curated Ashby job-board slugs (jobs.ashbyhq.com/{slug}). Some entries may 404 or empty over time;
+# prune or extend this list for your search.
+
+organization_slugs:
+  - Ashby
+  - Retool
+  - Replit
+  - Figma
+  - Notion
+  - Airtable
+  - Ramp
+  - Brex
+  - Mercury
+  - ElevenLabs
+  - Convex
+  - WorkOS
+  - Descript
+  - Benchling
+  - Harvey
+  - Modal
+  - Neon
+  - Turso
+  - Cognition
+  - Vercel

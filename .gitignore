@@ -46,3 +46,4 @@ resume.pdf
 data/*
 !data/.gitkeep
 !data/position.example.yaml
+!data/weblist.example.yaml

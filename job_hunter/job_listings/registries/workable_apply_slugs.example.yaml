@@ -1,0 +1,18 @@
+# Curated Workable apply-site slugs (apply.workable.com/{slug}/). Widget API may return empty jobs;
+# replace with employers you care about.
+
+apply_account_slugs:
+  - careers
+  - canonical
+  - gitlab
+  - typeform
+  - hotjar
+  - remote
+  - gorgias
+  - deel
+  - toptal
+  - andela
+  - workable
+  - elastic
+  - percona
+  - snyk

@@ -62,3 +62,34 @@ board_tokens:
   - contentful
   - miro
   - airtable
+  # From santifer/career-ops templates/portals.example.yml (Greenhouse board tokens)
+  - ada
+  - amplemarket
+  - arizeai
+  - blackforestlabs
+  - boomilp
+  - celonis
+  - factorial
+  - getyourguide
+  - gleanwork
+  - helsing
+  - hellofresh
+  - hightouch
+  - hootsuite
+  - humeai
+  - isomorphiclabs
+  - later
+  - n26
+  - parloa
+  - physicsx
+  - planetscale
+  - polyai
+  - runpod
+  - runwayml
+  - safariai
+  - scandit
+  - speechmatics
+  - stabilityai
+  - sumup
+  - traderepublicbank
+  - wayve

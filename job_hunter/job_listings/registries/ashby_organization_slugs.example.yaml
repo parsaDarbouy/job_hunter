@@ -22,3 +22,36 @@ organization_slugs:
   - Turso
   - Cognition
   - Vercel
+  # From santifer/career-ops templates/portals.example.yml (Ashby-hosted careers)
+  - AlephAlpha
+  - DeepL
+  - attio
+  - bland
+  - causaly
+  - claylabs
+  - clerk
+  - cohere
+  - cradlebio
+  - decagon
+  - deepgram
+  - faculty
+  - glacis-ai
+  - inngest
+  - klue
+  - langchain
+  - lakera.ai
+  - legora
+  - lindy
+  - lovable
+  - n8n
+  - perplexity
+  - photoroom
+  - pinecone
+  - resend
+  - sierra
+  - supabase
+  - synthesia
+  - tinybird
+  - travelperk
+  - vapi
+  - zapier

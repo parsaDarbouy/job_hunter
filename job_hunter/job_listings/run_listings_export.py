@@ -18,6 +18,7 @@ from job_hunter.job_listings.config_sources import (
     resolve_position_path,
     resolve_weblist_path,
 )
+from job_hunter.job_listings.location_description_rescue import LocationDescriptionRescueRunner
 from job_hunter.job_listings.position_filters import posting_matches_position
 from job_hunter.job_listings.query_plan import build_query_plan
 from job_hunter.job_listings.weblist_expand import expand_weblist_sources
@@ -42,9 +43,14 @@ def run_listings_export(
     query_output_path: Path | None = None,
     csv_output_path: Path | None = None,
     debug: bool = False,
+    gemini_binary: str | None = None,
+    gemini_model: str | None = None,
 ) -> Path:
     """
     Build ``query.yaml``, fetch listings, filter by ``position.yaml``, write ``jobs_export.csv``.
+
+    Optional ``gemini_*`` overrides apply when ``location_constraints.gemini_description_rescue.enabled``
+    is true in ``position.yaml``.
 
     Returns the absolute path to the CSV file.
     """
@@ -75,7 +81,17 @@ def run_listings_export(
             print(f"[debug] source={source.get('id')!r}: {warning}", file=sys.stderr)
         aggregated.extend(postings)
 
-    matched = [posting for posting in aggregated if posting_matches_position(posting, position_document)]
+    rescue_runner = LocationDescriptionRescueRunner.maybe_build(
+        position_document,
+        gemini_binary=gemini_binary,
+        model=gemini_model,
+        debug=debug,
+    )
+    matched = [
+        posting
+        for posting in aggregated
+        if posting_matches_position(posting, position_document, location_rescue_runner=rescue_runner)
+    ]
     deduped = dedupe_job_postings_by_url(matched)
     write_jobs_csv(deduped, csv_out)
     return csv_out

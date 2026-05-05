@@ -16,3 +16,6 @@ apply_account_slugs:
   - elastic
   - percona
   - snyk
+  # From santifer/career-ops templates/portals.example.yml
+  - huggingface
+  - semios

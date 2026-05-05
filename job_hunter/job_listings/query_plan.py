@@ -37,11 +37,15 @@ def _criteria_snapshot(position: Mapping[str, Any]) -> dict[str, Any]:
     location_constraints = position.get("location_constraints") or {}
     compensation = position.get("compensation") or {}
     seniority = position.get("acceptable_seniority_levels")
+    seniority_blocked = position.get("not_acceptable_seniority_levels")
     experience = position.get("acceptable_years_experience_on_job") or {}
     return {
         "location_constraints": dict(location_constraints) if isinstance(location_constraints, dict) else {},
         "compensation": dict(compensation) if isinstance(compensation, dict) else {},
         "acceptable_seniority_levels": list(seniority) if isinstance(seniority, list) else [],
+        "not_acceptable_seniority_levels": (
+            list(seniority_blocked) if isinstance(seniority_blocked, list) else []
+        ),
         "acceptable_years_experience_on_job": dict(experience) if isinstance(experience, dict) else {},
         "titles": {
             "acceptable": _acceptable_titles(position),

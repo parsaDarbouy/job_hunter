@@ -6,9 +6,9 @@ from urllib.parse import quote
 
 
 def greenhouse_jobs_url(board_token: str) -> str:
-    """Greenhouse public jobs JSON for a board token (includes ``content`` HTML for JD rescue)."""
+    """Greenhouse public jobs JSON for a board token."""
     safe = quote(str(board_token), safe="")
-    return f"https://boards-api.greenhouse.io/v1/boards/{safe}/jobs?content=true"
+    return f"https://boards-api.greenhouse.io/v1/boards/{safe}/jobs"
 
 
 def ashby_job_board_url(organization_slug: str) -> str:

@@ -86,8 +86,6 @@ def main(argv: list[str] | None = None) -> int:
             query_output_path=arguments.query_output,
             csv_output_path=arguments.csv_output,
             debug=arguments.debug,
-            gemini_binary=arguments.listings_gemini_binary,
-            gemini_model=arguments.listings_gemini_model,
         )
         print(csv_path)
         return 0
@@ -124,18 +122,6 @@ def main(argv: list[str] | None = None) -> int:
         "--debug",
         action="store_true",
         help="Print per-source fetch diagnostics to stderr",
-    )
-    listings.add_argument(
-        "--gemini-binary",
-        dest="listings_gemini_binary",
-        default=None,
-        help="Override Gemini CLI for location rescue (fallback: gemini_binary in position YAML, then gemini)",
-    )
-    listings.add_argument(
-        "--gemini-model",
-        dest="listings_gemini_model",
-        default=None,
-        help="Override Gemini model for location rescue (fallback: position YAML, then flash)",
     )
     listings.set_defaults(func=_run_listings_export)
 

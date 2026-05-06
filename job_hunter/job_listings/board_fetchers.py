@@ -52,7 +52,6 @@ def _fetch_greenhouse(source: Mapping[str, Any], source_id: str) -> tuple[list[J
             location_text = str(location_value.get("name") or "").strip()
         else:
             location_text = str(location_value or "").strip()
-        content_html = str(job.get("content") or "").strip()
         if not title or not link:
             continue
         postings.append(
@@ -62,7 +61,6 @@ def _fetch_greenhouse(source: Mapping[str, Any], source_id: str) -> tuple[list[J
                 location=location_text,
                 source_id=source_id,
                 provider_kind="greenhouse",
-                description_html=content_html,
             )
         )
     return postings, None
@@ -89,7 +87,6 @@ def _fetch_ashby(source: Mapping[str, Any], source_id: str) -> tuple[list[JobPos
         title = str(job.get("title") or "").strip()
         link = str(job.get("jobUrl") or "").strip()
         location_text = str(job.get("location") or "").strip()
-        description_html = str(job.get("descriptionHtml") or "").strip()
         if not title or not link:
             continue
         postings.append(
@@ -99,7 +96,6 @@ def _fetch_ashby(source: Mapping[str, Any], source_id: str) -> tuple[list[JobPos
                 location=location_text,
                 source_id=source_id,
                 provider_kind="ashby",
-                description_html=description_html,
             )
         )
     return postings, None
@@ -168,13 +164,6 @@ def _fetch_workable(source: Mapping[str, Any], source_id: str) -> tuple[list[Job
         title = str(job.get("title") or "").strip()
         link = _first_url_field(job)
         location_text = _location_from_workable_job(job)
-        description_html = str(
-            job.get("description")
-            or job.get("description_plain")
-            or job.get("body")
-            or job.get("html")
-            or ""
-        ).strip()
         if not title or not link:
             continue
         postings.append(
@@ -184,7 +173,6 @@ def _fetch_workable(source: Mapping[str, Any], source_id: str) -> tuple[list[Job
                 location=location_text,
                 source_id=source_id,
                 provider_kind="workable",
-                description_html=description_html,
             )
         )
     return postings, None if postings else "workable response contained no parseable job rows"

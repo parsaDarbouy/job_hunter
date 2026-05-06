@@ -3,14 +3,10 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any, Mapping
+from typing import Any, Mapping
 
-from job_hunter.job_listings.location_description_rescue import geography_allowed_with_optional_rescue
 from job_hunter.job_listings.location_geo import posting_location_allowed
 from job_hunter.job_listings.models import JobPosting
-
-if TYPE_CHECKING:
-    from job_hunter.job_listings.location_description_rescue import LocationDescriptionRescueRunner
 
 
 def _titles_block(position: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -158,22 +154,13 @@ def posting_compensation_allowed(posting: JobPosting, position: Mapping[str, Any
     return True
 
 
-def posting_matches_position(
-    posting: JobPosting,
-    position: Mapping[str, Any],
-    *,
-    location_rescue_runner: LocationDescriptionRescueRunner | None = None,
-) -> bool:
+def posting_matches_position(posting: JobPosting, position: Mapping[str, Any]) -> bool:
     """Return True when the posting satisfies all implemented filters."""
     if not posting.url.strip():
         return False
     if not posting_title_allowed(posting, position):
         return False
-    if not geography_allowed_with_optional_rescue(
-        posting,
-        position,
-        rescue_runner=location_rescue_runner,
-    ):
+    if not posting_location_allowed(posting, position):
         return False
     if not posting_compensation_allowed(posting, position):
         return False

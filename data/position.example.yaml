@@ -19,13 +19,6 @@ location_constraints:
   notes: >-
     Example: require Canada as home base; allow global remote when the listing states
     no country restriction.
-  # Optional: if heuristics reject the ATS location field, Gemini scores the JD vs constraints.
-  gemini_description_rescue:
-    enabled: false
-    minimum_likelihood: 0.5
-    min_plain_text_chars: 80
-    max_description_chars: 14000
-    timeout_seconds: 120
 
 compensation:
   currency: CAD

@@ -1,0 +1,32 @@
+# Employers drawn from a footprint-weighted slice of crypto (exchanges with large headcount & funding,
+# L1/L2 teams, infra, custody, data, liquidity, majors in Built In-style “Cryptocurrency” taxonomy).
+#
+# Hiring channel was inferred with **Ashby first**, then Workable, then Greenhouse; anything else is in
+# ``career_pages.blockchain.yaml``.
+
+organization_slugs:
+  - alchemy
+  - binance
+  - blockdaemon
+  - blockstream
+  - brale
+  - eigen-labs
+  - elliptic
+  - injective
+  - kraken
+  - ledger
+  - matter-labs
+  - mystenlabs
+  - nethermind
+  - opfoundation
+  - opensea
+  - paradigm
+  - parity
+  - paxos
+  - phantom
+  - polygon-labs
+  - protocol
+  - quicknode
+  - seifoundation
+  - stellar
+  - uniswap

@@ -1,0 +1,21 @@
+# One hundred major crypto / blockchain employers (see ``ashby_organization_slugs.blockchain.yaml`` header)
+# on public Greenhouse job boards (``boards-api.greenhouse.io``). Tokens were checked to return a jobs list.
+
+board_tokens:
+  - aptoslabs
+  - bitmex
+  - block
+  - bybit
+  - consensys
+  - corescientific
+  - figment
+  - grayscale
+  - jumpcrypto
+  - layerzerolabs
+  - nansen
+  - okx
+  - openzeppelin
+  - osmosis
+  - ripple
+  - robinhood
+  - sofi

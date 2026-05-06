@@ -1,0 +1,85 @@
+# Companies in the curated blockchain footprint whose primary hiring pages are not surfaced as Ashby /
+# Workable / Greenhouse identifiers from this probe (Lever, Ripple Dayforce, ATS behind heavy JS,
+# geographic blocks, etc.). Rows are URLs only—no scrape yet—see README “custom career pages”.
+#
+# Entries use the best-effort HTTPS landing URLs used for hiring (/careers, /jobs).
+
+careers_pages:
+  - url: https://www.acala.network/careers
+    display_name: Acala Careers
+  - url: https://animocabrands.com/careers
+    display_name: Animoca Brands Careers
+  - url: https://www.axelar.network/careers
+    display_name: Axelar Careers
+  - url: https://www.bitfarms.com/careers
+    display_name: Bitfarms Careers
+  - url: https://www.bitwiseinvestments.com/careers
+    display_name: Bitwise Careers
+  - url: https://www.celestia.org/careers
+    display_name: Celestia Careers
+  - url: https://certik.com/careers
+    display_name: CertiK Careers
+  - url: https://chain.link/careers
+    display_name: Chainlink Careers
+  - url: https://www.chainalysis.com/careers
+    display_name: Chainalysis Careers
+  - url: https://www.chiliz.com/careers
+    display_name: Chiliz Careers
+  - url: https://www.coinmetrics.io/careers
+    display_name: CoinMetrics Careers
+  - url: https://www.dapperlabs.com/careers
+    display_name: Dapper Labs Careers
+  - url: https://www.glassnode.com/careers
+    display_name: Glassnode Careers
+  - url: https://www.halborn.com/careers
+    display_name: Halborn Careers
+  - url: https://www.hedera.com/careers
+    display_name: Hedera Careers
+  - url: https://www.immutable.com/careers
+    display_name: Immutable Careers
+  - url: https://infura.io/careers
+    display_name: Infura Careers
+  - url: https://www.kaiko.com/careers
+    display_name: Kaiko Careers
+  - url: https://www.kucoin.com/careers
+    display_name: KuCoin Careers
+  - url: https://lido.fi/careers
+    display_name: Lido Careers
+  - url: https://marathondh.com/careers
+    display_name: Marathon Digital Careers
+  - url: https://www.microstrategy.com/careers
+    display_name: MicroStrategy Careers
+  - url: https://www.minaprotocol.com/jobs
+    display_name: Mina Foundation Jobs
+  - url: https://www.monad.xyz/careers
+    display_name: Monad Careers
+  - url: https://www.moonpay.com/careers
+    display_name: MoonPay Careers
+  - url: https://www.near.org/careers
+    display_name: NEAR Foundation Careers
+  - url: https://www.offchainlabs.com/careers
+    display_name: Offchain Labs Careers
+  - url: https://www.panteracapital.com/careers
+    display_name: Pantera Capital Careers
+  - url: https://www.riotplatforms.com/careers
+    display_name: Riot Platforms Careers
+  - url: https://www.sky.money/careers
+    display_name: Sky Careers
+  - url: https://solana.org/careers
+    display_name: Solana Foundation Careers
+  - url: https://www.starkware.co/careers
+    display_name: StarkWare Careers
+  - url: https://www.tether.to/careers
+    display_name: Tether Careers
+  - url: https://www.toolsforhumanity.com/careers
+    display_name: Tools for Humanity Careers
+  - url: https://www.trailofbits.com/careers
+    display_name: Trail of Bits Careers
+  - url: https://www.trmlabs.com/careers
+    display_name: TRM Labs Careers
+  - url: https://www.wintermute.com/careers
+    display_name: Wintermute Careers
+  - url: https://www.wormhole.com/careers
+    display_name: Wormhole Foundation Careers
+  - url: https://yuga.com/careers
+    display_name: Yuga Labs Careers

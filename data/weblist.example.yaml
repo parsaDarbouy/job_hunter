@@ -21,6 +21,24 @@ sources:
     kind: custom_career_page
     careers_pages_registry: package:career_pages.example.yaml
 
+  # Optional: footprint-ranked crypto / blockchain employers (``*.blockchain.yaml`` in registries/).
+  # Comment out or set ``enabled: false`` if you do not want these extra fetch tasks.
+  - id: greenhouse_blockchain
+    kind: greenhouse
+    board_tokens_registry: package:greenhouse_boards.blockchain.yaml
+
+  - id: ashby_blockchain
+    kind: ashby
+    organization_slugs_registry: package:ashby_organization_slugs.blockchain.yaml
+
+  - id: workable_blockchain
+    kind: workable
+    apply_account_slugs_registry: package:workable_apply_slugs.blockchain.yaml
+
+  - id: custom_career_blockchain
+    kind: custom_career_page
+    careers_pages_registry: package:career_pages.blockchain.yaml
+
   # Inline extras (merged with their own ids if you prefer single-board rows):
   # - id: greenhouse_extra
   #   kind: greenhouse

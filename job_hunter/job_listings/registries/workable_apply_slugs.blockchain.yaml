@@ -1,0 +1,22 @@
+# Public Workable widget slugs checked via ``apply.workable.com/api/v1/widget/accounts/{slug}`` for this footprint set.
+
+apply_account_slugs:
+  - algorand
+  - anchorage
+  - avax
+  - bitgo
+  - bitstamp
+  - blockchain
+  - circle
+  - coinbase
+  - coindesk
+  - coinlist
+  - crypto
+  - cumberland
+  - curve
+  - dydx
+  - exodus
+  - fireblocks
+  - flashbots
+  - galaxy
+  - gemini

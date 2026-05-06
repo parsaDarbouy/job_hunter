@@ -72,6 +72,8 @@ After `pip install -e .`, you can also run `job-hunter listings:export`.
 - **Inline lists**: `board_tokens`, `organization_slugs`, `apply_account_slugs`, or `careers_pages` (`[{url, display_name}, …]`).
 - **Registry files**: `board_tokens_registry`, `organization_slugs_registry`, `apply_account_slugs_registry`, or `careers_pages_registry` — YAML paths **relative to the weblist file**, or absolute paths, or **`package:filename.yaml`** for bundled lists under `job_hunter/job_listings/registries/` (see `data/weblist.example.yaml`).
 
+Bundled **`package:*.blockchain.yaml`** registries split a footprint-ranked set of crypto / blockchain employers across Greenhouse tokens, Ashby slugs, Workable apply slugs (each company appears in exactly one file), plus custom careers URLs without a scrape yet. **`data/weblist.example.yaml`** and the default **`data/weblist.yaml`** include separate `sources` rows (``greenhouse_blockchain``, etc.) that reference those files; remove them or set ``enabled: false`` if you do not want that coverage.
+
 You can merge singles + lists + registry on one row; tokens are de-duplicated. For **custom career pages**, URLs are included in `query.yaml` for tracking; there is still **no automated HTML scrape** (fetch returns no rows until a fetcher exists). Set `enabled: false` on a row to skip expansion and HTTP for that block.
 
 **Filters today:** title allow / block lists, geography rules from `location_constraints` (ATS **location** string heuristics only), and **seniority** from `acceptable_seniority_levels` / `not_acceptable_seniority_levels`. Seniority is inferred from **job title keywords** (listing APIs rarely expose a structured level). Titles with no seniority signal still pass when an allow-list is set. Compensation ranges and stated YOE in `position.yaml` are captured in `criteria_snapshot` for transparency; compensation is not used to drop rows automatically when listings do not include structured pay.
@@ -84,7 +86,7 @@ You can merge singles + lists + registry on one row; tokens are de-duplicated. F
 | `job_hunter/cli.py` | CLI entry (`resume:ingest`, `listings:export`) |
 | `job_hunter/paths.py` | Shared default paths (`DATA_DIRECTORY`, default resume / weblist / position / query / CSV paths) |
 | `job_hunter/job_listings/` | Listing export: YAML plan, HTTP fetchers, filters, CSV writer |
-| `job_hunter/job_listings/registries/*.yaml` | Bundled example board lists (Greenhouse tokens, Ashby slugs, Workable slugs, career URLs) for `package:` weblist references |
+| `job_hunter/job_listings/registries/*.yaml` | Bundled example board lists (Greenhouse tokens, Ashby slugs, Workable slugs, career URLs) for `package:` weblist references; optional `*.blockchain.yaml` packs |
 | `job_hunter/job_listings/weblist_expand.py` | Expands multi-company weblist rows before `query.yaml` and fetching |
 | `job_hunter/resume_ingest/pdf_loader.py` | PDF → text |
 | `job_hunter/resume_ingest/text_cleaner.py` | Deterministic whitespace cleanup |

@@ -52,7 +52,7 @@ Gemini CLI loads project commands from `.gemini/commands/`. See `.gemini/command
 
 ## Command: `listings:export`
 
-Build `data/query.yaml`, fetch jobs from configured **Greenhouse**, **Ashby**, and **Workable** public JSON (Workable uses the apply-site widget API for the account slug in `https://apply.workable.com/{slug}/`), filter using `position.yaml`, and write **`data/jobs_export.csv`** with columns `url`, `job_title`, `location`.
+Build `data/query.yaml`, fetch jobs from configured **Greenhouse**, **Ashby**, and **Workable** public JSON (Workable uses the apply-site widget API for the account slug in `https://apply.workable.com/{slug}/`), filter using `position.yaml`, and write **`data/jobs_export.csv`** with columns `url`, `job_title`, `location`, `company_name` (board API name when present, otherwise a heuristic from token/slug).
 
 ```bash
 python3 -m job_hunter listings:export

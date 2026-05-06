@@ -62,4 +62,4 @@ location_constraints:
     assert "fetch_tasks" in text
     assert "title_query_matrix" in text
     assert csv_out.is_file()
-    assert csv_out.read_text(encoding="utf-8").startswith("url,job_title,location")
+    assert csv_out.read_text(encoding="utf-8").startswith("url,job_title,location,company_name")

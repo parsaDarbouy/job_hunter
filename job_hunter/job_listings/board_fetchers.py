@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from job_hunter.job_listings.company_display import greenhouse_company_display, humanize_board_identifier
 from job_hunter.job_listings.http_json import get_json_optional
 from job_hunter.job_listings.models import JobPosting
 
@@ -33,7 +34,8 @@ def _fetch_greenhouse(source: Mapping[str, Any], source_id: str) -> tuple[list[J
     token = source.get("board_token")
     if not token:
         return [], f"greenhouse source {source_id!r} missing board_token"
-    url = greenhouse_jobs_url(str(token))
+    token_str = str(token).strip()
+    url = greenhouse_jobs_url(token_str)
     payload, error_message = get_json_optional(url)
     if error_message:
         return [], error_message
@@ -54,6 +56,7 @@ def _fetch_greenhouse(source: Mapping[str, Any], source_id: str) -> tuple[list[J
             location_text = str(location_value or "").strip()
         if not title or not link:
             continue
+        company = greenhouse_company_display(job, board_token=token_str)
         postings.append(
             JobPosting(
                 url=link,
@@ -61,6 +64,7 @@ def _fetch_greenhouse(source: Mapping[str, Any], source_id: str) -> tuple[list[J
                 location=location_text,
                 source_id=source_id,
                 provider_kind="greenhouse",
+                company_name=company,
             )
         )
     return postings, None
@@ -72,7 +76,9 @@ def _fetch_ashby(source: Mapping[str, Any], source_id: str) -> tuple[list[JobPos
     slug = source.get("organization_slug")
     if not slug:
         return [], f"ashby source {source_id!r} missing organization_slug"
-    url = ashby_job_board_url(str(slug))
+    slug_str = str(slug).strip()
+    company_label = humanize_board_identifier(slug_str)
+    url = ashby_job_board_url(slug_str)
     payload, error_message = get_json_optional(url)
     if error_message:
         return [], error_message
@@ -96,6 +102,7 @@ def _fetch_ashby(source: Mapping[str, Any], source_id: str) -> tuple[list[JobPos
                 location=location_text,
                 source_id=source_id,
                 provider_kind="ashby",
+                company_name=company_label,
             )
         )
     return postings, None
@@ -154,7 +161,9 @@ def _fetch_workable(source: Mapping[str, Any], source_id: str) -> tuple[list[Job
     slug = source.get("apply_account_slug")
     if not slug:
         return [], f"workable source {source_id!r} missing apply_account_slug"
-    url = workable_apply_jobs_url(str(slug))
+    slug_str = str(slug).strip()
+    company_label = humanize_board_identifier(slug_str)
+    url = workable_apply_jobs_url(slug_str)
     payload, error_message = get_json_optional(url)
     if error_message:
         return [], error_message
@@ -173,6 +182,7 @@ def _fetch_workable(source: Mapping[str, Any], source_id: str) -> tuple[list[Job
                 location=location_text,
                 source_id=source_id,
                 provider_kind="workable",
+                company_name=company_label,
             )
         )
     return postings, None if postings else "workable response contained no parseable job rows"

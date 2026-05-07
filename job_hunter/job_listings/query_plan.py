@@ -163,9 +163,11 @@ def _title_query_matrix(sources: list[Mapping[str, Any]], acceptable_titles: lis
                 {
                     "source_id": source_id,
                     "provider_kind": str(kind),
-                    "acceptable_title": title,
-                    "match_strategy": "job_title_contains_acceptable_title_case_insensitive",
-                }
+                        "acceptable_title": title,
+                        "match_strategy": (
+                            "job_title_matches_acceptable_title_phrase_case_insensitive_word_boundaries"
+                        ),
+                    }
             )
     return rows
 

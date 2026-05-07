@@ -27,12 +27,29 @@ def test_not_acceptable_title_rejects() -> None:
     assert posting_matches_position(posting, position) is False
 
 
-def test_acceptable_title_requires_substring_when_list_nonempty() -> None:
+def test_acceptable_title_requires_phrase_match_when_list_nonempty() -> None:
     position = {"titles": {"acceptable": ["DevOps"], "not_acceptable": []}}
     ok = _posting(title="Senior DevOps Engineer", location="Canada")
     bad = _posting(title="Account Executive", location="Canada")
     assert posting_title_allowed(ok, position) is True
     assert posting_title_allowed(bad, position) is False
+
+
+def test_acceptable_title_phrase_allows_qualified_suffix() -> None:
+    position = {
+        "titles": {
+            "acceptable": ["Site Reliability Engineer"],
+            "not_acceptable": [],
+        }
+    }
+    long_title = _posting(
+        title=(
+            "Site Reliability Engineer - AI & ML Infrastructure "
+            "(Kubernetes, AWS & Terraform)"
+        ),
+        location="Canada",
+    )
+    assert posting_title_allowed(long_title, position) is True
 
 
 def test_location_requires_configured_country() -> None:

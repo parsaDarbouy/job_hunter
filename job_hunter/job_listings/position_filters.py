@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import re
 from typing import Any, Mapping
 
@@ -32,12 +33,28 @@ def _not_acceptable_title_strings(position: Mapping[str, Any]) -> list[str]:
     return [str(item).strip() for item in raw if str(item).strip()]
 
 
+@functools.lru_cache(maxsize=512)
+def _acceptable_title_phrase_pattern(phrase: str) -> re.Pattern[str]:
+    """
+    Whole-phrase matcher (Unicode word boundaries).
+
+    Matches the configured wording anywhere in the job title while allowing extra suffixes such as
+    ``Site Reliability Engineer - Platform (AWS)``.
+    Short tokens such as ``SRE`` avoid accidental hits inside unrelated words compared to naive
+    substring search.
+    """
+    return re.compile(rf"\b{re.escape(phrase)}\b", re.IGNORECASE | re.UNICODE)
+
+
 def posting_title_allowed(posting: JobPosting, position: Mapping[str, Any]) -> bool:
     """
     Title rules:
 
     * Any ``not_acceptable`` substring (case-insensitive) rejects.
-    * When ``acceptable`` is non-empty, require at least one substring match.
+    * When ``acceptable`` is non-empty, require at least one case-insensitive **phrase** match: each
+      entry matches as a contiguous run of Unicode word characters bordered by boundaries (similar
+      in spirit to wrapping the text in regex ``\\b...\\b``), so qualifiers after the phrase are
+      allowed.
     * When ``acceptable`` is empty, only ``not_acceptable`` is enforced.
     """
     title_lower = posting.title.lower()
@@ -47,8 +64,9 @@ def posting_title_allowed(posting: JobPosting, position: Mapping[str, Any]) -> b
     acceptable = _acceptable_title_strings(position)
     if not acceptable:
         return True
+    title = posting.title
     for wanted in acceptable:
-        if wanted.lower() in title_lower:
+        if _acceptable_title_phrase_pattern(wanted).search(title):
             return True
     return False
 

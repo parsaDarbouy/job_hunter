@@ -34,7 +34,9 @@ compensation:
 # Seniority is inferred from job title keywords. Allow-list and/or block-list canonical bands:
 # intern, junior, mid_level, senior, lead, staff, principal, director, head, executive.
 # If ``acceptable_seniority_levels`` is non-empty, inferred level must match (titles with no
-# signal still pass). ``not_acceptable_seniority_levels`` rejects matching inferred levels first.
+# signal still pass). ``not_acceptable_seniority_levels`` rejects matching inferred buckets and
+# also rejects when blocked wording clearly appears as its own phrase in the title (word-boundary
+# matching so ``International`` does not trip ``intern``).
 acceptable_seniority_levels:
   - intern
   - junior

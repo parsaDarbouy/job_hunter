@@ -119,3 +119,41 @@ def test_seniority_not_applied_when_lists_empty() -> None:
     }
     staff = _posting(title="Staff Engineer", location="Toronto, ON, Canada")
     assert posting_matches_position(staff, position) is True
+
+
+def test_bare_platform_phrase_needs_technical_title_context() -> None:
+    """``Platform`` in GTM titles must not bypass allow-list solely on the trailing qualifier."""
+    position = {
+        "titles": {"acceptable": ["Site Reliability Engineer", "Platform"], "not_acceptable": []},
+        "acceptable_seniority_levels": [],
+        "not_acceptable_seniority_levels": [],
+        "location_constraints": {"countries_onsite_or_hybrid_ok": ["Canada"]},
+    }
+    marketing = _posting(title="Product Marketing Manager, Platform", location="Toronto, ON, Canada")
+    ic = _posting(title="Staff Platform Infrastructure Engineer", location="Toronto, ON, Canada")
+    assert posting_matches_position(marketing, position) is False
+    assert posting_matches_position(ic, position) is True
+
+
+def test_seniority_blocklist_matches_intern_word_not_international_prefix() -> None:
+    position = {
+        "titles": {"acceptable": ["Engineer"], "not_acceptable": []},
+        "not_acceptable_seniority_levels": ["intern"],
+        "location_constraints": {"countries_onsite_or_hybrid_ok": ["Canada"]},
+    }
+    internship = _posting(title="Software Engineer Internship", location="Toronto, ON, Canada")
+    globe = _posting(title="Senior Software Engineer, International Expansion", location="Toronto, ON, Canada")
+    assert posting_matches_position(internship, position) is False
+    assert posting_matches_position(globe, position) is True
+
+
+def test_seniority_block_can_read_executive_keyword_without_inference() -> None:
+    position = {
+        "titles": {"acceptable": ["Engineer", "Executive"], "not_acceptable": []},
+        "not_acceptable_seniority_levels": ["executive"],
+        "location_constraints": {"countries_onsite_or_hybrid_ok": ["Canada"]},
+    }
+    sales_exec = _posting(title="Account Executive", location="Toronto, ON, Canada")
+    infra = _posting(title="Site Reliability Engineer", location="Toronto, ON, Canada")
+    assert posting_matches_position(sales_exec, position) is False
+    assert posting_matches_position(infra, position) is True

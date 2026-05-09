@@ -46,6 +46,94 @@ def _acceptable_title_phrase_pattern(phrase: str) -> re.Pattern[str]:
     return re.compile(rf"\b{re.escape(phrase)}\b", re.IGNORECASE | re.UNICODE)
 
 
+# Bare allow-list fragments like ``Platform`` or ``Infrastructure`` frequently appear in product or
+# GTM titles (for example ``Product Marketing Manager, Platform``). Require a recognizable
+# engineering / infra role signal whenever the posting only qualifies via these short phrases.
+_ACCEPTABLE_PHRASES_REQUIRING_TECH_TITLE_CONTEXT: frozenset[str] = frozenset(
+    {"platform", "cloud", "infrastructure"}
+)
+
+_TECH_ROLE_TITLE_SIGNAL_PATTERN = re.compile(
+    r"\b("
+    r"engineers?|"
+    r"engineering|"
+    r"developers?|"
+    r"devops|"
+    r"sre|"
+    r"site\s+reliability|"
+    r"systems?\s+(administrator|engineer)|"
+    r"network\s+(administrator|engineer)|"
+    r"database\s+(administrator|engineer)|"
+    r"infra(structure)?(\s+(engineer|architect))?|"
+    r"software|"
+    r"hardware|"
+    r"embedded|"
+    r"cryptograph(y|ic)?|"
+    r"quantum\s+computing|"
+    r"research\s+scientist|"
+    r"data\s+(engineer|scientist)|"
+    r"machine\s+learning|"
+    r"trust\s*&\s*safety|"
+    r"privacy\s+engineering|"
+    r"information\s+security|"
+    r"information\s+risk"
+    r")\b",
+    re.IGNORECASE | re.UNICODE,
+)
+
+
+def _acceptable_phrase_needs_technical_title_context(phrase_stripped_lower: str) -> bool:
+    return phrase_stripped_lower in _ACCEPTABLE_PHRASES_REQUIRING_TECH_TITLE_CONTEXT
+
+
+def _title_has_technical_role_signal(title: str) -> bool:
+    return bool(_TECH_ROLE_TITLE_SIGNAL_PATTERN.search(title))
+
+
+@functools.lru_cache(maxsize=256)
+def _blocked_seniority_literal_pattern(term_normalized: str) -> re.Pattern[str] | None:
+    """
+    Case-insensitive match when a configured block term appears as a real word/spoken phrase in the
+    title (not inferred seniority buckets only). Guards against titles like ``Account Executive``.
+    """
+    synonyms: Mapping[str, str] = {
+        "intern": r"\bintern(?:ship)?s?\b",
+        "lead": r"\bleads?\b",
+        "staff": r"\bstaff\b",
+        "principal": r"\bprincipal\b",
+        "director": r"\bdirectors?\b",
+        "head": r"\bhead\b",
+        "executive": (
+            r"\bexec(?:utive|utives)?\b|\bchief\b|\bceos?\b|\bcto\b|\bcfos?\b|\bcoo\b|\bvice[-\s]+presidents?\b"
+        ),
+        "junior": r"\bjunior\b|\bjr\.?\b",
+        "mid_level": r"\bmid[-\s]?level\b",
+        "mid-level": r"\bmid[-\s]?level\b",
+        "senior": r"\bsenior\b|\bsr\.?\b",
+        "intermediate": r"\bintermediate\b",
+    }
+    pattern_text = synonyms.get(term_normalized.lower().strip())
+    if pattern_text is None:
+        token = term_normalized.strip().lower().replace("_", r"[\s_-]+")
+        if not token:
+            return None
+        pattern_text = rf"\b{token}\b"
+    return re.compile(pattern_text, re.IGNORECASE | re.UNICODE)
+
+
+def _title_blocked_by_literal_seniority_terms(title: str, blocked: list[str]) -> bool:
+    if not title.strip():
+        return False
+    for raw in blocked:
+        term_norm = raw.strip().lower()
+        pattern = _blocked_seniority_literal_pattern(term_norm)
+        if pattern is None:
+            continue
+        if pattern.search(title):
+            return True
+    return False
+
+
 def posting_title_allowed(posting: JobPosting, position: Mapping[str, Any]) -> bool:
     """
     Title rules:
@@ -55,6 +143,9 @@ def posting_title_allowed(posting: JobPosting, position: Mapping[str, Any]) -> b
       entry matches as a contiguous run of Unicode word characters bordered by boundaries (similar
       in spirit to wrapping the text in regex ``\\b...\\b``), so qualifiers after the phrase are
       allowed.
+    * When the only qualifying phrase is ``Platform``, ``Cloud``, or ``Infrastructure``, the title
+      must also mention a plausible engineering / technical role cue (these tokens often appear as
+      org names in commercial roles otherwise).
     * When ``acceptable`` is empty, only ``not_acceptable`` is enforced.
     """
     title_lower = posting.title.lower()
@@ -65,9 +156,16 @@ def posting_title_allowed(posting: JobPosting, position: Mapping[str, Any]) -> b
     if not acceptable:
         return True
     title = posting.title
+    tech_signal = _title_has_technical_role_signal(title)
     for wanted in acceptable:
-        if _acceptable_title_phrase_pattern(wanted).search(title):
-            return True
+        key = wanted.strip().lower()
+        if not key:
+            continue
+        if not _acceptable_title_phrase_pattern(wanted).search(title):
+            continue
+        if _acceptable_phrase_needs_technical_title_context(key) and not tech_signal:
+            continue
+        return True
     return False
 
 
@@ -141,7 +239,9 @@ def posting_seniority_allowed(posting: JobPosting, position: Mapping[str, Any]) 
     """
     Seniority rules use ``acceptable_seniority_levels`` and ``not_acceptable_seniority_levels``.
 
-    * ``not_acceptable_seniority_levels``: reject when :func:`infer_seniority_from_title` matches.
+    * ``not_acceptable_seniority_levels``: reject when :func:`infer_seniority_from_title` matches,
+      **or** when the raw title visibly contains blocked level wording (whole-word patterns, so
+      ``intern`` does not reject ``International``).
     * ``acceptable_seniority_levels``: when non-empty, require inferred level to be listed.
       Titles with **no** inferred seniority still pass (ATS titles are noisy).
     * When both lists are empty or absent, seniority is not filtered.
@@ -150,6 +250,8 @@ def posting_seniority_allowed(posting: JobPosting, position: Mapping[str, Any]) 
     blocked = _seniority_level_list(position, "not_acceptable_seniority_levels")
     if not acceptable and not blocked:
         return True
+    if blocked and _title_blocked_by_literal_seniority_terms(posting.title, blocked):
+        return False
     inferred = infer_seniority_from_title(posting.title)
     if inferred is not None and inferred in blocked:
         return False

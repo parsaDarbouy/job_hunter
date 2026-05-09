@@ -1,6 +1,6 @@
 # Job Hunter
 
-Agentic job-hunting utilities. **Resume ingestion** turns a PDF resume into a normalized `resume.yaml`. **Listing export** reads `weblist.yaml` (job board sources) plus `position.yaml` (your filters), writes a machine-readable `query.yaml` plan (fetch URLs and title-matching matrix), pulls public listings where supported, filters rows against your position criteria, and saves matches to `jobs_export.csv`.
+Agentic job-hunting utilities. **Resume ingestion** turns a PDF resume into a normalized `resume.yaml`. **Listing export** reads `weblist.yaml` (job board sources) plus `position.yaml` (your filters), writes a machine-readable `query.yaml` plan (fetch URLs and title-matching matrix), pulls public listings where supported, filters rows against your position criteria, and merges matches into `jobs_export.csv` (new URLs only when the file already exists).
 
 Copy `data/position.example.yaml` → `data/position.yaml` and `data/weblist.example.yaml` → `data/weblist.yaml`, then edit boards, titles, and geography to match your search.
 
@@ -52,7 +52,7 @@ Gemini CLI loads project commands from `.gemini/commands/`. See `.gemini/command
 
 ## Command: `listings:export`
 
-Build `data/query.yaml`, fetch jobs from configured **Greenhouse**, **Ashby**, and **Workable** public JSON (Workable uses the apply-site widget API for the account slug in `https://apply.workable.com/{slug}/`), filter using `position.yaml`, and write **`data/jobs_export.csv`** with columns `url`, `job_title`, `listing_posted_date`, `added_to_list_date`, `location`, `company_name` (`listing_posted_date` is the calendar day the ATS reports the role was listed—`YYYY-MM-DD`—when provided; otherwise empty; `added_to_list_date` is the first day that job URL appeared in your export file for the current output path—re-runs keep the original date, new URLs pick up the export run’s local “today”; `company_name` is the board API name when present, otherwise a heuristic from token/slug).
+Build `data/query.yaml`, fetch jobs from configured **Greenhouse**, **Ashby**, and **Workable** public JSON (Workable uses the apply-site widget API for the account slug in `https://apply.workable.com/{slug}/`), filter using `position.yaml`, and merge into **`data/jobs_export.csv`** with columns `url`, `job_title`, `listing_posted_date`, `added_to_list_date`, `location`, `company_name` (`listing_posted_date` is the calendar day the ATS reports the role was listed—`YYYY-MM-DD`—when provided; otherwise empty; `added_to_list_date` is the first local-calendar day this tool appended that ``url`` to this CSV—already-exported URLs are skipped on later runs instead of overwriting the row; roles that vanished from ATS listings remain in the sheet until you delete them; `company_name` is the board API name when present, otherwise a heuristic from token/slug).
 
 ```bash
 python3 -m job_hunter listings:export

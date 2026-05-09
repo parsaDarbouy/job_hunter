@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import datetime
 from pathlib import Path
+from typing import Any, Mapping
 
 from job_hunter.job_listings.models import JobPosting
 
@@ -12,34 +13,67 @@ from job_hunter.job_listings.models import JobPosting
 _ADDED_COLUMN = "added_to_list_date"
 
 
-def _load_added_to_list_date_by_url(previous_csv: Path) -> dict[str, str]:
-    """
-    Load URL → ``YYYY-MM-DD`` from an existing export so re-runs keep the original “first seen here” day.
+_CSV_FIELDNAMES = [
+    "url",
+    "job_title",
+    "listing_posted_date",
+    _ADDED_COLUMN,
+    "location",
+    "company_name",
+]
 
-    When the file has no ``added_to_list_date`` column (pre-feature CSV), returns an empty map so
-    every visible row adopts the next run date once.
+
+def _canonical_row_from_reader(row: Mapping[str, Any]) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for name in _CSV_FIELDNAMES:
+        out[name] = str(row.get(name) or "").strip()
+    return out
+
+
+def _load_existing_export_rows(csv_path: Path) -> list[dict[str, str]]:
     """
-    if not previous_csv.is_file():
-        return {}
+    Deserialize prior export rows deduped by ``url``, preserving file order.
+
+    Rows without a usable ``url`` are skipped.
+    Unknown / legacy headers are tolerated; absent columns yield empty strings.
+    """
+    if not csv_path.is_file():
+        return []
+    rows: list[dict[str, str]] = []
+    seen_urls: set[str] = set()
     try:
-        with previous_csv.open(encoding="utf-8", newline="") as handle:
+        with csv_path.open(encoding="utf-8", newline="") as handle:
             reader = csv.DictReader(handle)
-            if reader.fieldnames is None or _ADDED_COLUMN not in reader.fieldnames:
-                return {}
-            accumulated: dict[str, str] = {}
-            for row in reader:
-                if not isinstance(row, dict):
+            for raw in reader:
+                if not isinstance(raw, dict):
                     continue
-                url_key = str(row.get("url") or "").strip()
-                when = str(row.get(_ADDED_COLUMN) or "").strip()
-                if not url_key or not when:
+                canonical = _canonical_row_from_reader(raw)
+                url_key = canonical["url"].strip()
+                if not url_key or url_key in seen_urls:
                     continue
-                earlier = accumulated.get(url_key)
-                if earlier is None or when < earlier:
-                    accumulated[url_key] = when
-            return accumulated
+                seen_urls.add(url_key)
+                rows.append(canonical)
     except OSError:
-        return {}
+        return []
+    return rows
+
+
+def _backfill_missing_added_dates(rows: list[dict[str, str]], run_iso: str) -> None:
+    """Fill empty ``added_to_list_date`` cells (e.g. legacy CSV) with the current run day."""
+    for row in rows:
+        if not str(row.get(_ADDED_COLUMN) or "").strip():
+            row[_ADDED_COLUMN] = run_iso
+
+
+def _posting_to_row(posting: JobPosting, added_iso: str) -> dict[str, str]:
+    return {
+        "url": posting.url.strip(),
+        "job_title": posting.title,
+        "listing_posted_date": posting.listing_posted_date,
+        _ADDED_COLUMN: added_iso,
+        "location": posting.location,
+        "company_name": posting.company_name,
+    }
 
 
 def write_jobs_csv(
@@ -52,34 +86,37 @@ def write_jobs_csv(
     Persist ``postings`` with columns ``url``, ``job_title``, ``listing_posted_date``,
     ``added_to_list_date``, ``location``, ``company_name``.
 
-    ``listing_posted_date`` is ``YYYY-MM-DD`` when the listing API exposed a publication time.
+    If ``output_path`` already exists, **existing rows are kept**. For each fetched posting, when
+    its ``url`` already appears in that file the row is **skipped** so prior fields (including the
+    original ``added_to_list_date``) remain unchanged; brand-new URLs are **appended** with
+    ``added_to_list_date`` set to ``list_addition_run_date`` (default **local**
+    :func:`datetime.date.today`). Jobs that disappeared from listings stay in the file until removed
+    manually.
 
-    ``added_to_list_date`` is the calendar day this tool first included the row for that ``url`` in
-    this CSV: new URLs use ``list_addition_run_date`` (default **local** :func:`datetime.date.today`);
-    URLs already present in ``output_path`` keep their previous value.
+    ``listing_posted_date`` remains the calendar day reported by the listing API where present.
 
-    Overwrites ``output_path`` when it already exists. Uses UTF-8 and standard CSV quoting.
+    Overwrites ``output_path`` atomically via full rewrite each run. Uses UTF-8 and standard CSV
+    quoting.
     """
     run_day = list_addition_run_date or datetime.date.today()
     run_iso = run_day.isoformat()
-    preserved = _load_added_to_list_date_by_url(output_path)
+
+    merged_rows = _load_existing_export_rows(output_path)
+    _backfill_missing_added_dates(merged_rows, run_iso)
+    urls_present = {row["url"].strip() for row in merged_rows if row["url"].strip()}
+
+    for posting in postings:
+        url_key = posting.url.strip()
+        if not url_key:
+            continue
+        if url_key in urls_present:
+            continue
+        merged_rows.append(_posting_to_row(posting, run_iso))
+        urls_present.add(url_key)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
-        writer.writerow(
-            ["url", "job_title", "listing_posted_date", _ADDED_COLUMN, "location", "company_name"],
-        )
-        for posting in postings:
-            url_key = posting.url.strip()
-            added = preserved.get(url_key) or run_iso
-            writer.writerow(
-                [
-                    posting.url,
-                    posting.title,
-                    posting.listing_posted_date,
-                    added,
-                    posting.location,
-                    posting.company_name,
-                ]
-            )
+        writer.writerow(_CSV_FIELDNAMES)
+        for row in merged_rows:
+            writer.writerow([row[name] for name in _CSV_FIELDNAMES])

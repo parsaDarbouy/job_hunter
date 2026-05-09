@@ -44,7 +44,7 @@ def run_listings_export(
     debug: bool = False,
 ) -> Path:
     """
-    Build ``query.yaml``, fetch listings, filter by ``position.yaml``, write ``jobs_export.csv``.
+    Build ``query.yaml``, fetch listings, filter by ``position.yaml``, merge into ``jobs_export.csv``.
 
     Returns the absolute path to the CSV file.
     """

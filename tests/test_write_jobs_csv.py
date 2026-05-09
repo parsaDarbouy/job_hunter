@@ -52,6 +52,38 @@ def test_added_to_list_date_preserved_across_runs(tmp_path: Path) -> None:
     assert rows[0]["added_to_list_date"] == "2026-01-01"
 
 
+def test_appends_only_new_urls_preserves_order_and_added_dates(tmp_path: Path) -> None:
+    out = tmp_path / "jobs.csv"
+    first_day = date(2026, 1, 1)
+    second_day = date(2026, 6, 1)
+    a = JobPosting(
+        url="https://example.com/a",
+        title="Role A",
+        location="Canada",
+        source_id="s",
+        provider_kind="greenhouse",
+        company_name="Co",
+        listing_posted_date="",
+    )
+    b = JobPosting(
+        url="https://example.com/b",
+        title="Role B",
+        location="USA",
+        source_id="s",
+        provider_kind="greenhouse",
+        company_name="Co",
+        listing_posted_date="",
+    )
+    write_jobs_csv([a], out, list_addition_run_date=first_day)
+    write_jobs_csv([a, b], out, list_addition_run_date=second_day)
+    rows = _read_rows(out)
+    assert len(rows) == 2
+    assert rows[0]["url"] == "https://example.com/a"
+    assert rows[0]["added_to_list_date"] == "2026-01-01"
+    assert rows[1]["url"] == "https://example.com/b"
+    assert rows[1]["added_to_list_date"] == "2026-06-01"
+
+
 def test_migration_previous_csv_without_added_column_sets_run_day(tmp_path: Path) -> None:
     out = tmp_path / "jobs.csv"
     out.write_text(

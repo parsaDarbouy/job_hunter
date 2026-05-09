@@ -55,3 +55,19 @@ organization_slugs:
   - travelperk
   - vapi
   - zapier
+  # Globally remote employers; organization slugs verified via Ashby posting API.
+  - buffer
+  - camunda
+  - chilipiper
+  - cursor
+  - docker
+  - envoy
+  - fullstory
+  - launchdarkly
+  - linear
+  - mistral
+  - openai
+  - oyster
+  - posthog
+  - render
+  - sentry

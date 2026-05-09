@@ -86,7 +86,7 @@ You can merge singles + lists + registry on one row; tokens are de-duplicated. F
 | `job_hunter/cli.py` | CLI entry (`resume:ingest`, `listings:export`) |
 | `job_hunter/paths.py` | Shared default paths (`DATA_DIRECTORY`, default resume / weblist / position / query / CSV paths) |
 | `job_hunter/job_listings/` | Listing export: YAML plan, HTTP fetchers, filters, CSV writer |
-| `job_hunter/job_listings/registries/*.yaml` | Bundled example board lists (Greenhouse tokens, Ashby slugs, Workable slugs, career URLs) for `package:` weblist references; optional `*.blockchain.yaml` packs |
+| `job_hunter/job_listings/registries/*.yaml` | Bundled example board lists (Greenhouse tokens, Ashby slugs, Workable slugs, career URLs) for `package:` weblist references; optional `*.blockchain.yaml` packs. The `*.example.yaml` files include an extension aimed at globally remote-friendly employers (tokens/slugs validated against each vendor’s public listing API). |
 | `job_hunter/job_listings/weblist_expand.py` | Expands multi-company weblist rows before `query.yaml` and fetching |
 | `job_hunter/resume_ingest/pdf_loader.py` | PDF → text |
 | `job_hunter/resume_ingest/text_cleaner.py` | Deterministic whitespace cleanup |

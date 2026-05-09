@@ -19,3 +19,17 @@ apply_account_slugs:
   # From santifer/career-ops templates/portals.example.yml
   - huggingface
   - semios
+  # Globally remote employers; apply account slugs verified via Workable widget API.
+  - automattic
+  - circle
+  - doist
+  - duckduckgo
+  - float
+  - gloat
+  - mailerlite
+  - maze
+  - metabase
+  - paymentology
+  - personio
+  - teachable
+  - testgorilla

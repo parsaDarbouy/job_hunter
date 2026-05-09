@@ -12,6 +12,9 @@ class JobPosting:
 
     ``company_name`` is the Greenhouse ``company_name`` when available; otherwise a display
     label derived from board token or organization/account slug.
+
+    ``listing_posted_date`` is ``YYYY-MM-DD`` when the public listing payload exposes a publication
+    or first-listed timestamp; otherwise empty.
     """
 
     url: str
@@ -20,3 +23,4 @@ class JobPosting:
     source_id: str
     provider_kind: str
     company_name: str = ""
+    listing_posted_date: str = ""

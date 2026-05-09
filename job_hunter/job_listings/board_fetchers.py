@@ -2,11 +2,42 @@
 
 from __future__ import annotations
 
+import datetime
 from typing import Any, Mapping
 
 from job_hunter.job_listings.company_display import greenhouse_company_display, humanize_board_identifier
 from job_hunter.job_listings.http_json import get_json_optional
 from job_hunter.job_listings.models import JobPosting
+
+
+def _listing_posted_date_iso(value: Any) -> str:
+    """
+    Normalize ATS date/time strings into a calendar ``YYYY-MM-DD`` for spreadsheets.
+
+    Returns an empty string when the value cannot be interpreted.
+    """
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if not text:
+        return ""
+    head = text[:10]
+    if len(head) == 10 and head[4] == "-" and head[7] == "-":
+        try:
+            return datetime.date.fromisoformat(head).isoformat()
+        except ValueError:
+            pass
+    normalized = text.replace("Z", "+00:00")
+    try:
+        parsed = datetime.datetime.fromisoformat(normalized)
+        return parsed.date().isoformat()
+    except ValueError:
+        pass
+    try:
+        parsed = datetime.datetime.fromisoformat(normalized.replace(" ", "T", 1))
+        return parsed.date().isoformat()
+    except ValueError:
+        return ""
 
 
 def fetch_jobs_for_source(source: Mapping[str, Any]) -> tuple[list[JobPosting], str | None]:
@@ -57,6 +88,9 @@ def _fetch_greenhouse(source: Mapping[str, Any], source_id: str) -> tuple[list[J
         if not title or not link:
             continue
         company = greenhouse_company_display(job, board_token=token_str)
+        listed = _listing_posted_date_iso(job.get("first_published")) or _listing_posted_date_iso(
+            job.get("updated_at")
+        )
         postings.append(
             JobPosting(
                 url=link,
@@ -65,6 +99,7 @@ def _fetch_greenhouse(source: Mapping[str, Any], source_id: str) -> tuple[list[J
                 source_id=source_id,
                 provider_kind="greenhouse",
                 company_name=company,
+                listing_posted_date=listed,
             )
         )
     return postings, None
@@ -95,6 +130,7 @@ def _fetch_ashby(source: Mapping[str, Any], source_id: str) -> tuple[list[JobPos
         location_text = str(job.get("location") or "").strip()
         if not title or not link:
             continue
+        listed = _listing_posted_date_iso(job.get("publishedAt"))
         postings.append(
             JobPosting(
                 url=link,
@@ -103,6 +139,7 @@ def _fetch_ashby(source: Mapping[str, Any], source_id: str) -> tuple[list[JobPos
                 source_id=source_id,
                 provider_kind="ashby",
                 company_name=company_label,
+                listing_posted_date=listed,
             )
         )
     return postings, None
@@ -175,6 +212,9 @@ def _fetch_workable(source: Mapping[str, Any], source_id: str) -> tuple[list[Job
         location_text = _location_from_workable_job(job)
         if not title or not link:
             continue
+        listed = _listing_posted_date_iso(job.get("published_on")) or _listing_posted_date_iso(
+            job.get("created_at")
+        )
         postings.append(
             JobPosting(
                 url=link,
@@ -183,6 +223,7 @@ def _fetch_workable(source: Mapping[str, Any], source_id: str) -> tuple[list[Job
                 source_id=source_id,
                 provider_kind="workable",
                 company_name=company_label,
+                listing_posted_date=listed,
             )
         )
     return postings, None if postings else "workable response contained no parseable job rows"

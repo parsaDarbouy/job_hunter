@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 # Root directory for generated files (YAML exports, future reports, etc.).
 DATA_DIRECTORY = Path("data")
@@ -41,3 +42,9 @@ def default_query_yaml_path() -> Path:
 def default_jobs_export_csv_path() -> Path:
     """Default CSV path for matched job rows from ``listings:export``."""
     return DATA_DIRECTORY / "jobs_export.csv"
+
+
+def default_filtered_jobs_csv_path(target_date: Any) -> Path:
+    """Default CSV path for AI-filtered jobs from ``jobs:filter``."""
+    date_text = target_date.isoformat() if hasattr(target_date, "isoformat") else str(target_date)
+    return DATA_DIRECTORY / f"filtered_jobs_{date_text}.csv"

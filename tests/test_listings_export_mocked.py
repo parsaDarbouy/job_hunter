@@ -63,5 +63,5 @@ location_constraints:
     assert "title_query_matrix" in text
     assert csv_out.is_file()
     assert csv_out.read_text(encoding="utf-8").startswith(
-        "url,job_title,listing_posted_date,added_to_list_date,location,company_name",
+        "url,job_title,listing_posted_date,added_to_list_date,location,company_name,job_description",
     )

@@ -10,22 +10,24 @@ from typing import Any, Mapping
 from job_hunter.job_listings.models import JobPosting
 
 
-_ADDED_COLUMN = "added_to_list_date"
+ADDED_TO_LIST_DATE_COLUMN = "added_to_list_date"
+JOB_DESCRIPTION_COLUMN = "job_description"
 
 
-_CSV_FIELDNAMES = [
+JOBS_EXPORT_FIELDNAMES = [
     "url",
     "job_title",
     "listing_posted_date",
-    _ADDED_COLUMN,
+    ADDED_TO_LIST_DATE_COLUMN,
     "location",
     "company_name",
+    JOB_DESCRIPTION_COLUMN,
 ]
 
 
 def _canonical_row_from_reader(row: Mapping[str, Any]) -> dict[str, str]:
     out: dict[str, str] = {}
-    for name in _CSV_FIELDNAMES:
+    for name in JOBS_EXPORT_FIELDNAMES:
         out[name] = str(row.get(name) or "").strip()
     return out
 
@@ -61,8 +63,8 @@ def _load_existing_export_rows(csv_path: Path) -> list[dict[str, str]]:
 def _backfill_missing_added_dates(rows: list[dict[str, str]], run_iso: str) -> None:
     """Fill empty ``added_to_list_date`` cells (e.g. legacy CSV) with the current run day."""
     for row in rows:
-        if not str(row.get(_ADDED_COLUMN) or "").strip():
-            row[_ADDED_COLUMN] = run_iso
+        if not str(row.get(ADDED_TO_LIST_DATE_COLUMN) or "").strip():
+            row[ADDED_TO_LIST_DATE_COLUMN] = run_iso
 
 
 def _posting_to_row(posting: JobPosting, added_iso: str) -> dict[str, str]:
@@ -70,9 +72,10 @@ def _posting_to_row(posting: JobPosting, added_iso: str) -> dict[str, str]:
         "url": posting.url.strip(),
         "job_title": posting.title,
         "listing_posted_date": posting.listing_posted_date,
-        _ADDED_COLUMN: added_iso,
+        ADDED_TO_LIST_DATE_COLUMN: added_iso,
         "location": posting.location,
         "company_name": posting.company_name,
+        JOB_DESCRIPTION_COLUMN: "",
     }
 
 
@@ -84,7 +87,7 @@ def write_jobs_csv(
 ) -> None:
     """
     Persist ``postings`` with columns ``url``, ``job_title``, ``listing_posted_date``,
-    ``added_to_list_date``, ``location``, ``company_name``.
+    ``added_to_list_date``, ``location``, ``company_name``, ``job_description``.
 
     If ``output_path`` already exists, **existing rows are kept**. For each fetched posting, when
     its ``url`` already appears in that file the row is **skipped** so prior fields (including the
@@ -117,6 +120,6 @@ def write_jobs_csv(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
-        writer.writerow(_CSV_FIELDNAMES)
+        writer.writerow(JOBS_EXPORT_FIELDNAMES)
         for row in merged_rows:
-            writer.writerow([row[name] for name in _CSV_FIELDNAMES])
+            writer.writerow([row[name] for name in JOBS_EXPORT_FIELDNAMES])

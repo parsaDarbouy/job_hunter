@@ -31,6 +31,10 @@ compensation:
     currency, convert amounts to `currency` with a rough ballpark rate—exact FX is not
     required; an approximate conversion is enough before comparing to expectation and minimum.
 
+ai_filtering:
+  # Minimum Gemini job-fit score required by `jobs:filter`.
+  minimum_alignment_percentage: 70
+
 # Seniority is inferred from job title keywords. Allow-list and/or block-list canonical bands:
 # intern, junior, mid_level, senior, lead, staff, principal, director, head, executive.
 # If ``acceptable_seniority_levels`` is non-empty, inferred level must match (titles with no

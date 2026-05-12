@@ -31,6 +31,7 @@ def test_added_to_list_date_is_run_day_when_no_previous_export(tmp_path: Path) -
     rows = _read_rows(out)
     assert len(rows) == 1
     assert rows[0]["added_to_list_date"] == "2026-05-08"
+    assert rows[0]["job_description"] == ""
 
 
 def test_added_to_list_date_preserved_across_runs(tmp_path: Path) -> None:
@@ -108,4 +109,22 @@ def test_migration_previous_csv_without_added_column_sets_run_day(tmp_path: Path
     write_jobs_csv([posting], out, list_addition_run_date=date(2026, 3, 3))
     rows = _read_rows(out)
     assert rows[0]["added_to_list_date"] == "2026-03-03"
+    assert rows[0]["job_description"] == ""
+
+
+def test_csv_has_job_description_as_final_column(tmp_path: Path) -> None:
+    out = tmp_path / "jobs.csv"
+    posting = JobPosting(
+        url="https://example.com/j/1",
+        title="Engineer",
+        location="Canada",
+        source_id="s",
+        provider_kind="greenhouse",
+        company_name="Co",
+        listing_posted_date="",
+    )
+    write_jobs_csv([posting], out, list_addition_run_date=date(2026, 5, 8))
+
+    header = out.read_text(encoding="utf-8").splitlines()[0].split(",")
+    assert header[-1] == "job_description"
 

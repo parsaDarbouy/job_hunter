@@ -3,15 +3,29 @@
 from __future__ import annotations
 
 import argparse
+import datetime
 import sys
 from pathlib import Path
 
-from job_hunter.paths import default_jobs_export_csv_path, default_query_yaml_path, default_resume_yaml_path
+from job_hunter.paths import (
+    default_filtered_jobs_csv_path,
+    default_jobs_export_csv_path,
+    default_position_yaml_path,
+    default_query_yaml_path,
+    default_resume_yaml_path,
+)
 from job_hunter.resume_ingest.normalize import normalize_extracted_resume
 from job_hunter.resume_ingest.pdf_loader import load_pdf_text
 from job_hunter.resume_ingest.resume_parser import parse_resume_with_gemini_cli
 from job_hunter.resume_ingest.text_cleaner import clean_resume_text
 from job_hunter.resume_ingest.yaml_writer import build_resume_document, write_resume_yaml
+
+
+def _iso_date(value: str) -> datetime.date:
+    try:
+        return datetime.date.fromisoformat(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("date must use YYYY-MM-DD format") from exc
 
 
 def _run_resume_ingest(arguments: argparse.Namespace) -> int:
@@ -124,6 +138,80 @@ def main(argv: list[str] | None = None) -> int:
         help="Print per-source fetch diagnostics to stderr",
     )
     listings.set_defaults(func=_run_listings_export)
+
+    def _run_jobs_filter(arguments: argparse.Namespace) -> int:
+        from job_hunter.job_filtering.run_job_filtering import run_job_filtering
+
+        output_path = run_job_filtering(
+            target_date=arguments.date,
+            jobs_csv_path=arguments.jobs_csv,
+            resume_path=arguments.resume,
+            position_path=arguments.position,
+            output_path=arguments.output,
+            gemini_binary=arguments.gemini_binary,
+            model=arguments.model,
+            max_description_chars=arguments.max_description_chars,
+            debug=arguments.debug,
+        )
+        print(output_path)
+        return 0
+
+    filtering = subparsers.add_parser(
+        "jobs:filter",
+        help="AI-filter jobs_export.csv rows added on a specific date",
+    )
+    filtering.add_argument(
+        "--date",
+        type=_iso_date,
+        required=True,
+        help="Only evaluate rows whose added_to_list_date matches this YYYY-MM-DD date",
+    )
+    filtering.add_argument(
+        "--jobs-csv",
+        type=Path,
+        default=None,
+        help=f"Input jobs CSV (default: {default_jobs_export_csv_path()})",
+    )
+    filtering.add_argument(
+        "--resume",
+        type=Path,
+        default=default_resume_yaml_path(),
+        help=f"Resume YAML (default: {default_resume_yaml_path()})",
+    )
+    filtering.add_argument(
+        "--position",
+        type=Path,
+        default=default_position_yaml_path(),
+        help=f"Position criteria YAML (default: {default_position_yaml_path()})",
+    )
+    filtering.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help=f"Filtered CSV output path (default: {default_filtered_jobs_csv_path('YYYY-MM-DD')})",
+    )
+    filtering.add_argument(
+        "--gemini-binary",
+        default="gemini",
+        help="Gemini CLI executable name or path (default: gemini)",
+    )
+    filtering.add_argument(
+        "--model",
+        default="flash",
+        help="Gemini CLI model alias or id (default: flash)",
+    )
+    filtering.add_argument(
+        "--max-description-chars",
+        type=int,
+        default=30_000,
+        help="Maximum job_description characters sent to Gemini per job (default: 30000)",
+    )
+    filtering.add_argument(
+        "--debug",
+        action="store_true",
+        help="Print per-job fetch and Gemini diagnostics to stderr",
+    )
+    filtering.set_defaults(func=_run_jobs_filter)
 
     namespace = parser.parse_args(argv)
     handler = getattr(namespace, "func", None)

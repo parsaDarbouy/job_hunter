@@ -1,6 +1,6 @@
 # Job Hunter
 
-Agentic job-hunting utilities. **Resume ingestion** turns a PDF resume into a normalized `resume.yaml`. **Listing export** reads `weblist.yaml` (job board sources) plus `position.yaml` (your filters), writes a machine-readable `query.yaml` plan (fetch URLs and title-matching matrix), pulls public listings where supported, filters rows against your position criteria, and merges matches into `jobs_export.csv` (new URLs only when the file already exists).
+Agentic job-hunting utilities. **Resume ingestion** turns a PDF resume into a normalized `resume.yaml`. **Listing export** reads `weblist.yaml` (job board sources) plus `position.yaml` (your filters), writes a machine-readable `query.yaml` plan (fetch URLs and title-matching matrix), pulls public listings where supported, filters rows against your position criteria, and merges matches into `jobs_export.csv` (new URLs only when the file already exists). **AI job filtering** uses Gemini CLI to review jobs added on a specific date against `resume.yaml` and `position.yaml`, then writes a filtered CSV.
 
 Copy `data/position.example.yaml` → `data/position.yaml` and `data/weblist.example.yaml` → `data/weblist.yaml`, then edit boards, titles, and geography to match your search.
 
@@ -16,6 +16,9 @@ cd job_hunter
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
+npm install -g @google/gemini-cli
+gemini auth
+gemini --version
 ```
 
 ## Command: `resume:ingest`
@@ -52,7 +55,7 @@ Gemini CLI loads project commands from `.gemini/commands/`. See `.gemini/command
 
 ## Command: `listings:export`
 
-Build `data/query.yaml`, fetch jobs from configured **Greenhouse**, **Ashby**, and **Workable** public JSON (Workable uses the apply-site widget API for the account slug in `https://apply.workable.com/{slug}/`), filter using `position.yaml`, and merge into **`data/jobs_export.csv`** with columns `url`, `job_title`, `listing_posted_date`, `added_to_list_date`, `location`, `company_name` (`listing_posted_date` is the calendar day the ATS reports the role was listed—`YYYY-MM-DD`—when provided; otherwise empty; `added_to_list_date` is the first local-calendar day this tool appended that ``url`` to this CSV—already-exported URLs are skipped on later runs instead of overwriting the row; roles that vanished from ATS listings remain in the sheet until you delete them; `company_name` is the board API name when present, otherwise a heuristic from token/slug).
+Build `data/query.yaml`, fetch jobs from configured **Greenhouse**, **Ashby**, and **Workable** public JSON (Workable uses the apply-site widget API for the account slug in `https://apply.workable.com/{slug}/`), filter using `position.yaml`, and merge into **`data/jobs_export.csv`** with columns `url`, `job_title`, `listing_posted_date`, `added_to_list_date`, `location`, `company_name`, `job_description` (`listing_posted_date` is the calendar day the ATS reports the role was listed—`YYYY-MM-DD`—when provided; otherwise empty; `added_to_list_date` is the first local-calendar day this tool appended that ``url`` to this CSV—already-exported URLs are skipped on later runs instead of overwriting the row; roles that vanished from ATS listings remain in the sheet until you delete them; `company_name` is the board API name when present, otherwise a heuristic from token/slug; `job_description` is left empty by export and filled later by `jobs:filter` only for the date being processed).
 
 ```bash
 python3 -m job_hunter listings:export
@@ -78,6 +81,40 @@ You can merge singles + lists + registry on one row; tokens are de-duplicated. F
 
 **Filters today:** `titles.acceptable` entries match job titles as **phrases with regex-style word boundaries** (case-insensitive), so roles like ``Site Reliability Engineer - AI & ML Infrastructure (…)`` match an allow-list line for ``Site Reliability Engineer``. Entries that are only short qualifiers such as ``Platform``, ``Cloud``, or ``Infrastructure`` also require a recognizable **engineering / infra role cue** elsewhere in the title (so listings like ``Product Marketing Manager, Platform`` do not pass on the trailing department name alone). `titles.not_acceptable` stays substring-based (drops the row when any phrase appears anywhere in the title, case-insensitive). Geography uses `location_constraints` (ATS **location** string heuristics only). **Seniority** uses `acceptable_seniority_levels` / `not_acceptable_seniority_levels`: in addition to the usual inferred bucket from **job title keywords**, ``not_acceptable_seniority_levels`` rejects when blocked level wording appears as real words/phrases (e.g. ``Account Executive`` when ``executive`` is blocked) without substring false positives such as rejecting ``International`` solely because ``intern`` appears mid-word. Titles with no seniority signal still pass when only an ``acceptable`` seniority allow-list applies. Compensation ranges and stated YOE in `position.yaml` are captured in `criteria_snapshot` for transparency; compensation is not used to drop rows automatically when listings do not include structured pay.
 
+## Command: `jobs:filter`
+
+Review exported jobs with **Gemini CLI** one by one. The command only evaluates rows where `added_to_list_date` equals the date you pass, so each listing batch can be processed once. If `data/jobs_export.csv` does not yet have the final `job_description` column, or a matching row has an empty value, the command fetches the job URL, extracts readable page text, stores it back in `jobs_export.csv`, and sends that description to Gemini.
+
+Add or edit the threshold in `data/position.yaml`:
+
+```yaml
+ai_filtering:
+  minimum_alignment_percentage: 70
+```
+
+Run the flow:
+
+```bash
+python3 -m job_hunter resume:ingest ./resume.pdf -o ./data/resume.yaml
+python3 -m job_hunter listings:export
+python3 -m job_hunter jobs:filter --date 2026-05-08
+```
+
+Useful options:
+
+```bash
+python3 -m job_hunter jobs:filter \
+  --date 2026-05-08 \
+  --jobs-csv ./data/jobs_export.csv \
+  --resume ./data/resume.yaml \
+  --position ./data/position.yaml \
+  --output ./data/filtered_jobs_2026-05-08.csv \
+  --model flash \
+  --debug
+```
+
+**Output:** stdout prints the absolute path to the filtered CSV. By default it writes `data/filtered_jobs_YYYY-MM-DD.csv` with the same columns as the current jobs export, including `job_description`.
+
 ## Layout
 
 | Path | Role |
@@ -86,6 +123,7 @@ You can merge singles + lists + registry on one row; tokens are de-duplicated. F
 | `job_hunter/cli.py` | CLI entry (`resume:ingest`, `listings:export`) |
 | `job_hunter/paths.py` | Shared default paths (`DATA_DIRECTORY`, default resume / weblist / position / query / CSV paths) |
 | `job_hunter/job_listings/` | Listing export: YAML plan, HTTP fetchers, filters, CSV writer |
+| `job_hunter/job_filtering/` | Date-scoped AI filtering: job page text extraction, Gemini scoring, filtered CSV writer |
 | `job_hunter/job_listings/registries/*.yaml` | Bundled example board lists (Greenhouse tokens, Ashby slugs, Workable slugs, career URLs) for `package:` weblist references; optional `*.blockchain.yaml` packs. The `*.example.yaml` files include an extension aimed at globally remote-friendly employers (tokens/slugs validated against each vendor’s public listing API). |
 | `job_hunter/job_listings/weblist_expand.py` | Expands multi-company weblist rows before `query.yaml` and fetching |
 | `job_hunter/resume_ingest/pdf_loader.py` | PDF → text |

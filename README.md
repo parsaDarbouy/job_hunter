@@ -113,7 +113,7 @@ python3 -m job_hunter jobs:filter \
   --debug
 ```
 
-**Output:** stdout prints the absolute path to the filtered CSV. By default it writes `data/filtered_jobs_YYYY-MM-DD.csv` with the same columns as the current jobs export, including `job_description`.
+**Output:** stdout prints the absolute path to the filtered CSV. By default it writes `data/filtered_jobs_YYYY-MM-DD.csv` with the same columns as the current jobs export, including `job_description`. Each accepted row is written and flushed to that file as soon as it passes, so you keep partial results if the run is interrupted.
 
 **Stderr:** structured `INFO` logs at start and end of the run (`job_filtering.start` / `job_filtering.complete` with `run_id`, counts, paths, and duration). `WARNING` on description fetch failures. With `--debug`, adds per-job assessment lines and Gemini subprocess diagnostics. While jobs are processed, a single-line ASCII progress bar shows `processed/total` and how many rows passed the threshold so far.
 

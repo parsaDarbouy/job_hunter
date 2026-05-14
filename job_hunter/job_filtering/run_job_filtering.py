@@ -12,7 +12,7 @@ from typing import Callable, TextIO
 
 import yaml
 
-from job_hunter.job_filtering.csv_io import read_jobs_csv_rows, write_jobs_csv_rows
+from job_hunter.job_filtering.csv_io import FilteredJobsCsvStreamWriter, read_jobs_csv_rows, write_jobs_csv_rows
 from job_hunter.job_filtering.gemini_filter import GeminiJobAssessment, assess_job_with_gemini_cli
 from job_hunter.job_filtering.job_page_text import fetch_job_description
 from job_hunter.job_listings.write_jobs_csv import ADDED_TO_LIST_DATE_COLUMN, JOB_DESCRIPTION_COLUMN
@@ -88,7 +88,9 @@ def run_job_filtering(
     Filter jobs added on ``target_date`` and write accepted rows to a dated CSV.
 
     Missing ``job_description`` values are fetched from each job URL before Gemini scoring and
-    persisted back into the input jobs CSV.
+    persisted back into the input jobs CSV. Accepted rows are appended to the filtered CSV as
+    soon as each job passes, with a flush after each row, so partial results remain if the
+    process stops unexpectedly.
 
     Logs go to the configured ``logging`` handlers (configure ``job_hunter`` or root for CLI).
     When ``enable_progress`` is True, a single-line progress indicator is written to
@@ -126,69 +128,73 @@ def run_job_filtering(
     )
 
     jobs_csv_changed = column_was_added
-    accepted_rows: list[dict[str, str]] = []
+    accepted_count = 0
     fetch_failures = 0
 
-    def _write_progress(processed: int, accepted: int) -> None:
-        if not enable_progress:
-            return
-        line = f"jobs:filter {run_id} {_format_progress_line(current=processed, total=total_candidates, accepted=accepted)}"
-        stream.write(f"\r{line}")
-        stream.flush()
+    filtered_writer = FilteredJobsCsvStreamWriter(filtered_output_path, fieldnames)
+    filtered_writer.open()
+    try:
+        def _write_progress(processed: int, accepted: int) -> None:
+            if not enable_progress:
+                return
+            line = f"jobs:filter {run_id} {_format_progress_line(current=processed, total=total_candidates, accepted=accepted)}"
+            stream.write(f"\r{line}")
+            stream.flush()
 
-    if enable_progress and total_candidates > 0:
-        _write_progress(0, 0)
+        if enable_progress and total_candidates > 0:
+            _write_progress(0, 0)
 
-    for index, row in enumerate(candidates, start=1):
-        description = row.get(JOB_DESCRIPTION_COLUMN, "").strip()
-        if not description:
-            try:
-                fetched_description = description_fetcher(row.get("url", ""))
-            except Exception as exc:  # pragma: no cover - defensive around network failures
-                fetched_description = ""
-                fetch_failures += 1
-                _logger.warning(
-                    "job_filtering.description_fetch_failed run_id=%s url=%s error=%s",
-                    run_id,
-                    row.get("url", ""),
-                    exc,
-                )
-            if fetched_description:
-                row[JOB_DESCRIPTION_COLUMN] = fetched_description
-                jobs_csv_changed = True
+        for index, row in enumerate(candidates, start=1):
+            description = row.get(JOB_DESCRIPTION_COLUMN, "").strip()
+            if not description:
+                try:
+                    fetched_description = description_fetcher(row.get("url", ""))
+                except Exception as exc:  # pragma: no cover - defensive around network failures
+                    fetched_description = ""
+                    fetch_failures += 1
+                    _logger.warning(
+                        "job_filtering.description_fetch_failed run_id=%s url=%s error=%s",
+                        run_id,
+                        row.get("url", ""),
+                        exc,
+                    )
+                if fetched_description:
+                    row[JOB_DESCRIPTION_COLUMN] = fetched_description
+                    jobs_csv_changed = True
 
-        assessment = job_assessor(
-            row,
-            resume_yaml_text=resume_yaml_text,
-            position_yaml_text=position_yaml_text,
-            minimum_alignment_percentage=minimum_alignment_percentage,
-            gemini_binary=gemini_binary,
-            model=model,
-            max_description_chars=max_description_chars,
-            debug=debug,
-        )
-        if debug:
-            _logger.debug(
-                "job_filtering.assessment run_id=%s job_title=%r alignment_pct=%s passes=%s reason=%r",
-                run_id,
-                row.get("job_title", ""),
-                assessment.alignment_percentage,
-                assessment.passes,
-                assessment.reason,
+            assessment = job_assessor(
+                row,
+                resume_yaml_text=resume_yaml_text,
+                position_yaml_text=position_yaml_text,
+                minimum_alignment_percentage=minimum_alignment_percentage,
+                gemini_binary=gemini_binary,
+                model=model,
+                max_description_chars=max_description_chars,
+                debug=debug,
             )
-        if assessment.passes and assessment.alignment_percentage >= minimum_alignment_percentage:
-            accepted_rows.append(row)
+            if debug:
+                _logger.debug(
+                    "job_filtering.assessment run_id=%s job_title=%r alignment_pct=%s passes=%s reason=%r",
+                    run_id,
+                    row.get("job_title", ""),
+                    assessment.alignment_percentage,
+                    assessment.passes,
+                    assessment.reason,
+                )
+            if assessment.passes and assessment.alignment_percentage >= minimum_alignment_percentage:
+                filtered_writer.write_accepted_row(row)
+                accepted_count += 1
 
-        _write_progress(index, len(accepted_rows))
+            _write_progress(index, accepted_count)
 
-    if enable_progress and total_candidates > 0:
-        stream.write("\n")
-        stream.flush()
+        if enable_progress and total_candidates > 0:
+            stream.write("\n")
+            stream.flush()
 
-    if jobs_csv_changed:
-        write_jobs_csv_rows(jobs_path, fieldnames, rows)
-
-    write_jobs_csv_rows(filtered_output_path, fieldnames, accepted_rows)
+        if jobs_csv_changed:
+            write_jobs_csv_rows(jobs_path, fieldnames, rows)
+    finally:
+        filtered_writer.close()
 
     elapsed_ms = int((time.monotonic() - started) * 1000)
     _logger.info(
@@ -196,8 +202,8 @@ def run_job_filtering(
         "fetch_failures=%s jobs_csv_updated=%s output_csv=%s",
         run_id,
         elapsed_ms,
-        len(accepted_rows),
-        total_candidates - len(accepted_rows),
+        accepted_count,
+        total_candidates - accepted_count,
         fetch_failures,
         jobs_csv_changed,
         filtered_output_path,

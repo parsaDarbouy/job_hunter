@@ -7,6 +7,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from job_hunter.job_filtering.csv_io import FilteredJobsCsvStreamWriter
 from job_hunter.job_filtering.gemini_filter import GeminiJobAssessment
 from job_hunter.job_filtering.run_job_filtering import run_job_filtering
 
@@ -114,3 +115,21 @@ def test_filtering_rejects_rows_below_configured_threshold_without_refetch(tmp_p
     )
 
     assert _read_rows(output) == []
+
+
+def test_filtered_jobs_csv_stream_writer_writes_incrementally(tmp_path: Path) -> None:
+    output_path = tmp_path / "filtered.csv"
+    writer = FilteredJobsCsvStreamWriter(output_path, ["url", "job_title"])
+    writer.open()
+    try:
+        first_snapshot = output_path.read_text(encoding="utf-8")
+        assert "url,job_title" in first_snapshot
+        assert "https://a.example" not in first_snapshot
+        writer.write_accepted_row({"url": "https://a.example", "job_title": "Eng"})
+        second_snapshot = output_path.read_text(encoding="utf-8")
+        assert "https://a.example" in second_snapshot
+        writer.write_accepted_row({"url": "https://b.example", "job_title": "SRE"})
+    finally:
+        writer.close()
+    lines = output_path.read_text(encoding="utf-8").strip().splitlines()
+    assert lines == ["url,job_title", "https://a.example,Eng", "https://b.example,SRE"]

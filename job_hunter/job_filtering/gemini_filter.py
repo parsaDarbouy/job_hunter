@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import subprocess
-import sys
 from dataclasses import dataclass
 from typing import Any, Mapping
 
 from job_hunter.job_listings.write_jobs_csv import JOB_DESCRIPTION_COLUMN
+
+_logger = logging.getLogger(__name__)
 
 
 _FILTER_PROMPT = """You are a job-fit evaluation engine.
@@ -144,9 +146,12 @@ def assess_job_with_gemini_cli(
 
     if debug:
         if completed.stdout:
-            print("[debug] gemini stdout length:", len(completed.stdout), file=sys.stderr)
+            _logger.debug("gemini_filter.subprocess stdout_bytes=%s", len(completed.stdout))
         if completed.stderr:
-            print("[debug] gemini stderr:\n", completed.stderr, file=sys.stderr)
+            err_text = completed.stderr.strip()
+            if len(err_text) > 2_000:
+                err_text = err_text[:2_000] + "…(truncated)"
+            _logger.debug("gemini_filter.subprocess stderr=%s", err_text)
 
     if completed.returncode != 0:
         raise RuntimeError(

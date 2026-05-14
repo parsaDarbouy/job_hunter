@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import logging
 import sys
 from pathlib import Path
 
@@ -141,6 +142,13 @@ def main(argv: list[str] | None = None) -> int:
 
     def _run_jobs_filter(arguments: argparse.Namespace) -> int:
         from job_hunter.job_filtering.run_job_filtering import run_job_filtering
+
+        logging.basicConfig(
+            level=logging.DEBUG if arguments.debug else logging.INFO,
+            format="%(levelname)s %(message)s",
+            stream=sys.stderr,
+            force=True,
+        )
 
         output_path = run_job_filtering(
             target_date=arguments.date,

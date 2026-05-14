@@ -115,12 +115,14 @@ python3 -m job_hunter jobs:filter \
 
 **Output:** stdout prints the absolute path to the filtered CSV. By default it writes `data/filtered_jobs_YYYY-MM-DD.csv` with the same columns as the current jobs export, including `job_description`.
 
+**Stderr:** structured `INFO` logs at start and end of the run (`job_filtering.start` / `job_filtering.complete` with `run_id`, counts, paths, and duration). `WARNING` on description fetch failures. With `--debug`, adds per-job assessment lines and Gemini subprocess diagnostics. While jobs are processed, a single-line ASCII progress bar shows `processed/total` and how many rows passed the threshold so far.
+
 ## Layout
 
 | Path | Role |
 |------|------|
 | `data/` | Default directory for CLI-generated files (gitignored contents; see `data/.gitkeep`). Tracked templates: `data/position.example.yaml`, `data/weblist.example.yaml`. Generated: `data/query.yaml`, `data/jobs_export.csv`, `data/resume.yaml`, etc. |
-| `job_hunter/cli.py` | CLI entry (`resume:ingest`, `listings:export`) |
+| `job_hunter/cli.py` | CLI entry (`resume:ingest`, `listings:export`, `jobs:filter`) |
 | `job_hunter/paths.py` | Shared default paths (`DATA_DIRECTORY`, default resume / weblist / position / query / CSV paths) |
 | `job_hunter/job_listings/` | Listing export: YAML plan, HTTP fetchers, filters, CSV writer |
 | `job_hunter/job_filtering/` | Date-scoped AI filtering: job page text extraction, Gemini scoring, filtered CSV writer |

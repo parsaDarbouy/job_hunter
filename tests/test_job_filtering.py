@@ -55,6 +55,7 @@ def test_filtering_adds_missing_description_column_and_fetches_only_target_date(
         resume_path=resume,
         position_path=position,
         output_path=output,
+        enable_progress=False,
         description_fetcher=fetch_description,
         job_assessor=assess_job,
     )
@@ -107,6 +108,7 @@ def test_filtering_rejects_rows_below_configured_threshold_without_refetch(tmp_p
         resume_path=resume,
         position_path=position,
         output_path=output,
+        enable_progress=False,
         description_fetcher=fetch_description,
         job_assessor=assess_job,
     )

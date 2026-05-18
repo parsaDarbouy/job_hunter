@@ -1,0 +1,12 @@
+# Apply account slugs verified via Workable widget API (``apply.workable.com/api/v1/widget/accounts/{slug}``).
+
+apply_account_slugs:
+  - automattic
+  - awesomemotive
+  - doist
+  - duckduckgo
+  - mailerlite
+  - modash
+  - pitch-software
+  - testgorilla
+  - zyte

@@ -1,0 +1,14 @@
+# Fully remote employers from Zapier’s “50+ fully remote companies” list (Jan 2025).
+# Organization slugs verified via Ashby public posting API (``api.ashbyhq.com``).
+# Each company appears in exactly one ``*.zapier.yaml`` registry file.
+
+organization_slugs:
+  - buffer
+  - chilipiper
+  - constructor
+  - contra
+  - float
+  - lightdash
+  - omniscient
+  - scalemath
+  - zapier

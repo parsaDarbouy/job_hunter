@@ -1,0 +1,53 @@
+# Zapier “work from anywhere” list employers without a supported Greenhouse / Ashby / Workable
+# public listing API from this probe (Lever, Teamtailor, custom sites, etc.). URLs are for
+# ``query.yaml`` tracking only—no automated HTML scrape yet.
+
+careers_pages:
+  - url: https://www.appcues.com/careers
+    display_name: Appcues Careers
+  - url: https://arkency.com/join-our-team/
+    display_name: Arkency Join Our Team
+  - url: https://www.groovehq.com/about#careers
+    display_name: Groove Careers
+  - url: https://kinsta.com/careers/
+    display_name: Kinsta Careers
+  - url: https://levity.ai/jobs
+    display_name: Levity Jobs
+  - url: https://literalhumans.com/team/
+    display_name: Literal Humans Team
+  - url: https://liveblocks.io/careers
+    display_name: Liveblocks Careers
+  - url: https://www.loomly.com/careers
+    display_name: Loomly Careers
+  - url: https://careers.getmailbird.com/
+    display_name: Mailbird Careers
+  - url: https://meetedgar.com/careers/
+    display_name: MeetEdgar Careers
+  - url: https://www.namecheap.com/careers/
+    display_name: Namecheap Careers
+  - url: https://plusdocs.com/careers/
+    display_name: Plus Careers
+  - url: https://www.linkedin.com/company/podiadotcom/jobs/
+    display_name: Podia Jobs (LinkedIn)
+  - url: https://safetywing.com/join-us
+    display_name: SafetyWing Join Us
+  - url: https://getshogun.com/careers
+    display_name: Shogun Careers
+  - url: https://www.simpletexting.com/careers/
+    display_name: SimpleTexting Careers
+  - url: https://smile.io/careers
+    display_name: Smile Careers
+  - url: https://springworks.in/careers
+    display_name: Springworks Careers
+  - url: https://www.storylane.io/careers
+    display_name: Storylane Careers
+  - url: https://tldv.notion.site/Come-work-at-tl-dv-8da9921dfaaa40d68450790a09d81efe
+    display_name: tl;dv Careers (Notion)
+  - url: https://toggl.com/jobs/
+    display_name: Toggl Jobs
+  - url: https://www.tortugabackpacks.com/pages/careers
+    display_name: Tortuga Careers
+  - url: https://careers.whereby.com/
+    display_name: Whereby Careers
+  - url: https://www.youneedabudget.com/careers/
+    display_name: YNAB Careers

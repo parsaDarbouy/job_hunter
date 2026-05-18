@@ -75,7 +75,7 @@ After `pip install -e .`, you can also run `job-hunter listings:export`.
 - **Inline lists**: `board_tokens`, `organization_slugs`, `apply_account_slugs`, or `careers_pages` (`[{url, display_name}, …]`).
 - **Registry files**: `board_tokens_registry`, `organization_slugs_registry`, `apply_account_slugs_registry`, or `careers_pages_registry` — YAML paths **relative to the weblist file**, or absolute paths, or **`package:filename.yaml`** for bundled lists under `job_hunter/job_listings/registries/` (see `data/weblist.example.yaml`).
 
-Bundled **`package:*.blockchain.yaml`** registries split a footprint-ranked set of crypto / blockchain employers across Greenhouse tokens, Ashby slugs, Workable apply slugs (each company appears in exactly one file), plus custom careers URLs without a scrape yet. **`data/weblist.example.yaml`** and the default **`data/weblist.yaml`** include separate `sources` rows (``greenhouse_blockchain``, etc.) that reference those files; remove them or set ``enabled: false`` if you do not want that coverage.
+Bundled **`package:*.blockchain.yaml`** registries split a footprint-ranked set of crypto / blockchain employers across Greenhouse tokens, Ashby slugs, Workable apply slugs (each company appears in exactly one file), plus custom careers URLs without a scrape yet. **`package:*.zapier.yaml`** does the same for Zapier’s [fully remote companies list](https://zapier.com/blog/companies-hiring-remote-workers/) (47 employers: API-backed boards where public JSON exists, otherwise career URLs for manual review). **`data/weblist.example.yaml`** and the default **`data/weblist.yaml`** include separate `sources` rows (``greenhouse_blockchain``, ``greenhouse_zapier``, etc.) that reference those files; remove them or set ``enabled: false`` if you do not want that coverage.
 
 You can merge singles + lists + registry on one row; tokens are de-duplicated. For **custom career pages**, URLs are included in `query.yaml` for tracking; there is still **no automated HTML scrape** (fetch returns no rows until a fetcher exists). Set `enabled: false` on a row to skip expansion and HTTP for that block.
 
@@ -126,7 +126,7 @@ python3 -m job_hunter jobs:filter \
 | `job_hunter/paths.py` | Shared default paths (`DATA_DIRECTORY`, default resume / weblist / position / query / CSV paths) |
 | `job_hunter/job_listings/` | Listing export: YAML plan, HTTP fetchers, filters, CSV writer |
 | `job_hunter/job_filtering/` | Date-scoped AI filtering: job page text extraction, Gemini scoring, filtered CSV writer |
-| `job_hunter/job_listings/registries/*.yaml` | Bundled example board lists (Greenhouse tokens, Ashby slugs, Workable slugs, career URLs) for `package:` weblist references; optional `*.blockchain.yaml` packs. The `*.example.yaml` files include an extension aimed at globally remote-friendly employers (tokens/slugs validated against each vendor’s public listing API). |
+| `job_hunter/job_listings/registries/*.yaml` | Bundled example board lists (Greenhouse tokens, Ashby slugs, Workable slugs, career URLs) for `package:` weblist references; optional `*.blockchain.yaml` and `*.zapier.yaml` packs. The `*.example.yaml` files include an extension aimed at globally remote-friendly employers (tokens/slugs validated against each vendor’s public listing API). |
 | `job_hunter/job_listings/weblist_expand.py` | Expands multi-company weblist rows before `query.yaml` and fetching |
 | `job_hunter/resume_ingest/pdf_loader.py` | PDF → text |
 | `job_hunter/resume_ingest/text_cleaner.py` | Deterministic whitespace cleanup |

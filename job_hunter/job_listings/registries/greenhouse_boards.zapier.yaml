@@ -1,0 +1,9 @@
+# Fully remote employers from Zapier’s “50+ fully remote companies” list (Jan 2025).
+# Board tokens verified via Greenhouse public jobs JSON (``boards-api.greenhouse.io``).
+
+board_tokens:
+  - ghost
+  - gitlab
+  - remotecom
+  - shelf
+  - sportygroup

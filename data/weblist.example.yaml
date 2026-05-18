@@ -39,6 +39,23 @@ sources:
     kind: custom_career_page
     careers_pages_registry: package:career_pages.blockchain.yaml
 
+  # Zapier “fully remote / work from anywhere” list (``*.zapier.yaml`` in registries/).
+  - id: greenhouse_zapier
+    kind: greenhouse
+    board_tokens_registry: package:greenhouse_boards.zapier.yaml
+
+  - id: ashby_zapier
+    kind: ashby
+    organization_slugs_registry: package:ashby_organization_slugs.zapier.yaml
+
+  - id: workable_zapier
+    kind: workable
+    apply_account_slugs_registry: package:workable_apply_slugs.zapier.yaml
+
+  - id: custom_career_zapier
+    kind: custom_career_page
+    careers_pages_registry: package:career_pages.zapier.yaml
+
   # Inline extras (merged with their own ids if you prefer single-board rows):
   # - id: greenhouse_extra
   #   kind: greenhouse

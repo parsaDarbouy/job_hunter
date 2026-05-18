@@ -1,0 +1,27 @@
+# US-headquartered and global tech employers with distributed teams; careers pages for ``query.yaml``
+# tracking only (no automated HTML scrape yet). Chosen to complement the API-backed
+# ``*.globally_remote.yaml`` Greenhouse / Ashby / Workable rows without duplicating those ATS entries.
+
+careers_pages:
+  - url: https://fly.io/jobs/
+    display_name: Fly.io Jobs
+  - url: https://upstash.com/careers
+    display_name: Upstash Careers
+  - url: https://cal.com/careers
+    display_name: Cal.com Careers
+  - url: https://www.raycast.com/jobs
+    display_name: Raycast Jobs
+  - url: https://oxide.computer/careers
+    display_name: Oxide Computer Company Careers
+  - url: https://www.superhuman.com/careers
+    display_name: Superhuman Careers
+  - url: https://www.1password.com/careers
+    display_name: 1Password Careers
+  - url: https://www.aha.io/company/careers
+    display_name: Aha! Careers
+  - url: https://basecamp.com/about/jobs
+    display_name: Basecamp Jobs
+  - url: https://www.varonis.com/careers
+    display_name: Varonis Careers
+  - url: https://val.town/careers
+    display_name: Val Town Careers

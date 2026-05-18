@@ -56,6 +56,23 @@ sources:
     kind: custom_career_page
     careers_pages_registry: package:career_pages.zapier.yaml
 
+  # Globally remote–friendly US / global B2B tech employers (``*.globally_remote.yaml`` in registries/).
+  - id: greenhouse_globally_remote
+    kind: greenhouse
+    board_tokens_registry: package:greenhouse_boards.globally_remote.yaml
+
+  - id: ashby_globally_remote
+    kind: ashby
+    organization_slugs_registry: package:ashby_organization_slugs.globally_remote.yaml
+
+  - id: workable_globally_remote
+    kind: workable
+    apply_account_slugs_registry: package:workable_apply_slugs.globally_remote.yaml
+
+  - id: custom_career_globally_remote
+    kind: custom_career_page
+    careers_pages_registry: package:career_pages.globally_remote.yaml
+
   # Inline extras (merged with their own ids if you prefer single-board rows):
   # - id: greenhouse_extra
   #   kind: greenhouse

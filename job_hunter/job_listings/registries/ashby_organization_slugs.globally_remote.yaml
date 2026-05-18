@@ -1,0 +1,32 @@
+# US-headquartered and global B2B tech employers with strong remote / distributed hiring.
+# Organization slugs verified via Ashby public posting API (``api.ashbyhq.com``).
+# Each company appears in at most one ``*.globally_remote.yaml`` registry file.
+
+organization_slugs:
+  - atomic
+  - belvo
+  - checkly
+  - codat
+  - column
+  - commonroom
+  - deel
+  - finch
+  - gainsight
+  - humanitec
+  - imprint
+  - incident
+  - knock
+  - merge
+  - moderntreasury
+  - nylas
+  - orbit
+  - paddle
+  - plain
+  - planhat
+  - railway
+  - rutter
+  - sanity
+  - statsig
+  - unit
+  - vitally
+  - windmill

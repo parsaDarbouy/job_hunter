@@ -1,0 +1,50 @@
+# US-headquartered and global B2B tech employers with strong remote / distributed hiring.
+# Board tokens verified via Greenhouse public jobs JSON (``boards-api.greenhouse.io``).
+# Each company appears in at most one ``*.globally_remote.yaml`` registry file.
+
+board_tokens:
+  - 6sense
+  - alloy
+  - apolloio
+  - axiom
+  - bandwidth
+  - bird
+  - bob
+  - braze
+  - calendly
+  - circleci
+  - complyadvantage
+  - crisp
+  - cultureamp
+  - current
+  - dagger
+  - fivetran
+  - galileo
+  - imply
+  - insider
+  - justworks
+  - keystone
+  - lattice
+  - lithic
+  - marqeta
+  - mercury
+  - newrelic
+  - pagerduty
+  - papaya
+  - pendo
+  - privacy
+  - pubnub
+  - remote
+  - salesloft
+  - smartsheet
+  - storyblok
+  - sumologic
+  - tailscale
+  - taxbit
+  - treasuryprime
+  - truelayer
+  - typeform
+  - vonage
+  - wrike
+  - yugabyte
+  - zuora

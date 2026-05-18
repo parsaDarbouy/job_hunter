@@ -1,0 +1,22 @@
+# US-headquartered and global B2B tech employers with strong remote / distributed hiring.
+# Apply account slugs verified via Workable widget API (``apply.workable.com/api/v1/widget/accounts/{slug}``).
+# Each company appears in at most one ``*.globally_remote.yaml`` registry file.
+
+apply_account_slugs:
+  - 15five
+  - bamboohr
+  - clevertech
+  - crossover
+  - glint
+  - gusto
+  - hibob
+  - medallia
+  - metabase
+  - multiplier
+  - oyster
+  - peakon
+  - qualtrics
+  - rippling
+  - turing
+  - x-team
+  - zenefits

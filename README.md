@@ -140,7 +140,7 @@ cv_layout:
 about_me_note: "Optional angle for the objective / about-me paragraph (preserved across resume:ingest)."
 ```
 
-``cv_layout`` and ``about_me_note`` are manual (preserved across ``resume:ingest``). Gemini must follow these limits for the objective (about me) and experience bullets; Python validates word and bullet counts after tailoring. Each experience bullet must use ``\\textbf{}`` for main keywords (tools, platforms, role terms from ``resume.yaml`` or the job description).
+``cv_layout`` and ``about_me_note`` are manual (preserved across ``resume:ingest``). Gemini must follow these limits for the objective (about me) and experience bullets; Python caps excess ``\\item`` lines in ``sections/experience.tex`` to ``experience_bullets_per_page × resume_max_pages``, then validates word and bullet counts. Each experience bullet must use ``\\textbf{}`` for main keywords (tools, platforms, role terms from ``resume.yaml`` or the job description).
 
 Run:
 

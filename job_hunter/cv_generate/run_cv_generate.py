@@ -12,6 +12,7 @@ from typing import Callable
 import yaml
 
 from job_hunter.cv_generate.experience_notes import collect_experience_notes
+from job_hunter.cv_generate.latex_text_metrics import cap_latex_item_bullets, count_latex_item_bullets
 from job_hunter.cv_generate.filename import build_cv_pdf_filename
 from job_hunter.cv_generate.gemini_tailor import GeminiCvTailorResult, tailor_cv_with_gemini_cli
 from job_hunter.cv_generate.job_description import fetch_and_save_job_description
@@ -108,17 +109,32 @@ def run_cv_generate(
         model=model,
         debug=debug,
     )
+    tailored_files = dict(tailor_result.files)
+    experience_tex_key = "sections/experience.tex"
+    max_experience_bullets = cv_layout.max_total_experience_bullets(resume_max_pages)
+    if experience_tex_key in tailored_files:
+        before_count = count_latex_item_bullets(tailored_files[experience_tex_key])
+        capped_tex = cap_latex_item_bullets(tailored_files[experience_tex_key], max_experience_bullets)
+        if count_latex_item_bullets(capped_tex) < before_count:
+            _logger.info(
+                "cv_generate.cap_experience_bullets run_id=%s before=%s max=%s",
+                run_id,
+                before_count,
+                max_experience_bullets,
+            )
+            tailored_files[experience_tex_key] = capped_tex
+
     validate_employers_in_latex(
         resume_document=resume_document,
-        files=tailor_result.files,
+        files=tailored_files,
     )
-    validate_previous_experience_format(tailor_result.files)
+    validate_previous_experience_format(tailored_files)
     validate_tailored_layout(
-        files=tailor_result.files,
+        files=tailored_files,
         layout=cv_layout,
         resume_max_pages=resume_max_pages,
     )
-    write_tailored_files(working_dir, tailor_result.files)
+    write_tailored_files(working_dir, tailored_files)
 
     built_pdf = compile_pdf(
         working_dir=working_dir,

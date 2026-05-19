@@ -40,11 +40,13 @@ def validate_tailored_layout(
         all_bullets.append(("sections/experience.tex", bullet))
 
     max_bullets = layout.max_total_experience_bullets(resume_max_pages)
-    if len(all_bullets) > max_bullets:
+    bullet_count = len(all_bullets)
+    if bullet_count > max_bullets:
         violations.append(
-            f"experience has {len(all_bullets)} bullets; "
-            f"maximum is {max_bullets} "
-            f"({layout.experience_bullets_per_page} per page × {resume_max_pages} page(s))"
+            f"sections/experience.tex has {bullet_count} \\item lines; "
+            f"must be at most {max_bullets} "
+            f"(experience_bullets_per_page={layout.experience_bullets_per_page} × "
+            f"resume_max_pages={resume_max_pages})"
         )
 
     for path, bullet in all_bullets:

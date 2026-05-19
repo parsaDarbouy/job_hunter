@@ -22,7 +22,7 @@ Rules (strict):
 - ALLOWED: rephrase existing highlights; reorder bullets; emphasize skills already listed in resume_yaml; bold keywords that already appear in resume_yaml or job_description_text; tighten the objective; omit or shorten content to respect resume_max_pages.
 - cv_layout_constraints (STRICT — must match exactly; count plain words with LaTeX markup removed):
   * sections/objective.tex (about me): word count MUST be >= about_me_word_count.min and <= about_me_word_count.max.
-  * Experience \\item bullets in sections/experience.tex ONLY: include up to experience_bullets_per_page * resume_max_pages bullets total (never exceed). Prefer job-relevant highlights; use real bullets from resume_yaml only.
+  * sections/experience.tex bullet count (STRICT): include EXACTLY cv_layout_constraints.experience_max_total_bullets ``\\item`` lines in that file — never more. If resume_yaml has fewer highlights, include all available but still must not exceed the cap. Prefer job-relevant highlights from resume_yaml only.
   * Each \\item in sections/experience.tex: plain-word count MUST be >= experience_bullet_word_count.min and <= experience_bullet_word_count.max. Shorten or split phrasing to comply; do not pad with filler words.
   * Each \\item in sections/experience.tex MUST wrap main keywords in \\textbf{{...}} (2–5 per bullet): technologies, tools, platforms, and role-relevant terms that already appear in resume_yaml or job_description_text (e.g. \\textbf{{AWS}}, \\textbf{{Kubernetes}}, \\textbf{{CI/CD}}). Do not bold entire sentences or words not in the source material.
   * sections/previous.tex (Previous Experience): NO \\item, NO \\begin{{zitemize}}, NO \\subsection, NO bullet lists. Use only the compact template format from template_files — one line per older role: \\skills{{Job title}}, \\textit{{Employer}}, \\textit{{Remote or city}} \\hfill {{\\bf start - end}}. List older roles from resume_yaml that are not already in sections/experience.tex.
@@ -106,7 +106,9 @@ def tailor_cv_with_gemini_cli(
     if about_me_note.strip():
         input_payload["about_me_note"] = about_me_note.strip()
     if cv_layout_constraints is not None:
-        input_payload["cv_layout_constraints"] = cv_layout_constraints.as_dict()
+        input_payload["cv_layout_constraints"] = cv_layout_constraints.as_dict(
+            resume_max_pages=resume_max_pages,
+        )
     stdin_payload = "---CV-GENERATE-INPUT---\n" + json.dumps(input_payload, ensure_ascii=False)
     command = [
         gemini_binary,

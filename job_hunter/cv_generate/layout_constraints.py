@@ -19,13 +19,14 @@ class CvLayoutConstraints:
     def max_total_experience_bullets(self, resume_max_pages: int) -> int:
         return self.experience_bullets_per_page * max(resume_max_pages, 1)
 
-    def as_dict(self) -> dict[str, Any]:
+    def as_dict(self, *, resume_max_pages: int) -> dict[str, Any]:
         return {
             "about_me_word_count": {
                 "min": self.about_me_words_min,
                 "max": self.about_me_words_max,
             },
             "experience_bullets_per_page": self.experience_bullets_per_page,
+            "experience_max_total_bullets": self.max_total_experience_bullets(resume_max_pages),
             "experience_bullet_word_count": {
                 "min": self.experience_bullet_words_min,
                 "max": self.experience_bullet_words_max,

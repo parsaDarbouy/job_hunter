@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from job_hunter.cv_generate.latex_text_metrics import count_plain_words, extract_zitemize_bullets
+from job_hunter.cv_generate.latex_text_metrics import (
+    cap_latex_item_bullets,
+    count_latex_item_bullets,
+    count_plain_words,
+    extract_zitemize_bullets,
+)
 from job_hunter.cv_generate.layout_constraints import CvLayoutConstraints, parse_cv_layout_constraints
 from job_hunter.cv_generate.validate_layout import validate_tailored_layout
 
@@ -81,8 +86,30 @@ def test_validate_tailored_layout_rejects_too_many_bullets() -> None:
             r"\end{zitemize}"
         ),
     }
-    with pytest.raises(ValueError, match="maximum is 1"):
+    with pytest.raises(ValueError, match="must be at most 1"):
         validate_tailored_layout(files=files, layout=layout, resume_max_pages=1)
+
+
+def test_cap_latex_item_bullets_enforces_max() -> None:
+    latex = (
+        r"\begin{zitemize}"
+        + "\n".join(rf"\item bullet number {index} here today now" for index in range(5))
+        + r"\end{zitemize}"
+    )
+    capped = cap_latex_item_bullets(latex, 3)
+    assert count_latex_item_bullets(capped) == 3
+
+
+def test_layout_as_dict_includes_max_total_bullets() -> None:
+    layout = CvLayoutConstraints(
+        about_me_words_min=50,
+        about_me_words_max=70,
+        experience_bullets_per_page=17,
+        experience_bullet_words_min=9,
+        experience_bullet_words_max=12,
+    )
+    payload = layout.as_dict(resume_max_pages=1)
+    assert payload["experience_max_total_bullets"] == 17
 
 
 def test_extract_zitemize_bullets() -> None:

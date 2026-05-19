@@ -137,9 +137,10 @@ cv_layout:
   experience_bullet_word_count:
     min: 18
     max: 32
+about_me_note: "Optional angle for the objective / about-me paragraph (preserved across resume:ingest)."
 ```
 
-``cv_layout`` is manual (preserved across ``resume:ingest``). Gemini must follow these limits for the objective (about me) and experience bullets; Python validates word and bullet counts after tailoring. Each experience bullet must use ``\\textbf{}`` for main keywords (tools, platforms, role terms from ``resume.yaml`` or the job description).
+``cv_layout`` and ``about_me_note`` are manual (preserved across ``resume:ingest``). Gemini must follow these limits for the objective (about me) and experience bullets; Python validates word and bullet counts after tailoring. Each experience bullet must use ``\\textbf{}`` for main keywords (tools, platforms, role terms from ``resume.yaml`` or the job description).
 
 Run:
 
@@ -153,6 +154,8 @@ python3 -m job_hunter cv:generate --resume ./data/resume.yaml --debug --model fl
 **Stdout:** absolute path to the generated PDF.
 
 **Anti-hallucination:** the Gemini prompt forbids inventing employers, roles, dates, or skills; Python rejects tailored LaTeX that references employers not listed under `experience` in `resume.yaml`.
+
+**About-me note:** optional top-level `about_me_note` steers `sections/objective.tex` (within `cv_layout.about_me_word_count`), using only facts from the note and `resume.yaml`.
 
 **Experience notes:** optional `note` on an `experience` entry (manual context not worth a full bullet). `cv:generate` passes these as `experience_note_hints` so Gemini may reflect the note in at most one existing bullet for that employer—briefly, without inventing new facts.
 

@@ -10,7 +10,13 @@ import yaml
 RESUME_MAX_PAGES_KEY = "resume_max_pages"
 TARGET_JOB_URL_KEY = "target_job_url"
 CV_LAYOUT_KEY = "cv_layout"
-CV_GENERATION_KEYS = (RESUME_MAX_PAGES_KEY, TARGET_JOB_URL_KEY, CV_LAYOUT_KEY)
+ABOUT_ME_NOTE_KEY = "about_me_note"
+CV_GENERATION_KEYS = (
+    RESUME_MAX_PAGES_KEY,
+    TARGET_JOB_URL_KEY,
+    CV_LAYOUT_KEY,
+    ABOUT_ME_NOTE_KEY,
+)
 
 
 def merge_cv_generation_settings(
@@ -19,7 +25,7 @@ def merge_cv_generation_settings(
     existing_output_path: Path | None,
 ) -> dict[str, Any]:
     """
-    Preserve ``resume_max_pages``, ``target_job_url``, and ``cv_layout`` from an existing file.
+    Preserve ``resume_max_pages``, ``target_job_url``, ``cv_layout``, and ``about_me_note`` from an existing file.
 
     New keys are inserted at the top of the document when present.
     """
@@ -52,3 +58,11 @@ def parse_target_job_url(resume_document: Mapping[str, Any]) -> str:
     if not url:
         raise ValueError(f"{TARGET_JOB_URL_KEY} must be set in resume.yaml")
     return url
+
+
+def parse_about_me_note(resume_document: Mapping[str, Any]) -> str:
+    """Return optional manual context for tailoring sections/objective.tex."""
+    raw = resume_document.get(ABOUT_ME_NOTE_KEY)
+    if raw is None:
+        return ""
+    return str(raw).strip()

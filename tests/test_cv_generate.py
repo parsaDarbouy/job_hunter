@@ -25,6 +25,7 @@ def test_merge_cv_generation_settings_preserves_top_level_fields(tmp_path: Path)
             {
                 "resume_max_pages": 1,
                 "target_job_url": "https://example.com/jobs/1",
+                "about_me_note": "Keep this angle",
                 "profile": {"name": "Old"},
             },
             sort_keys=False,
@@ -57,6 +58,7 @@ def test_merge_cv_generation_settings_preserves_top_level_fields(tmp_path: Path)
     merged = merge_cv_generation_settings(document, existing_output_path=output_path)
     assert merged["resume_max_pages"] == 1
     assert merged["target_job_url"] == "https://example.com/jobs/1"
+    assert merged["about_me_note"] == "Keep this angle"
     assert merged["profile"]["name"] == "New"
     keys = list(merged.keys())
     assert keys.index("resume_max_pages") < keys.index("profile")

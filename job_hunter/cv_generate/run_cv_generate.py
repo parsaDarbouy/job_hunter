@@ -28,7 +28,11 @@ from job_hunter.paths import (
     job_description_path,
     working_cv_template_dir,
 )
-from job_hunter.resume_ingest.resume_settings import parse_resume_max_pages, parse_target_job_url
+from job_hunter.resume_ingest.resume_settings import (
+    parse_about_me_note,
+    parse_resume_max_pages,
+    parse_target_job_url,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -89,6 +93,7 @@ def run_cv_generate(
     template_files = read_editable_template_files(working_dir)
 
     experience_note_hints = collect_experience_notes(resume_document)
+    about_me_note = parse_about_me_note(resume_document)
 
     tailor_result = tailor_cv(
         resume_yaml_text=resume_yaml_text,
@@ -96,6 +101,7 @@ def run_cv_generate(
         resume_max_pages=resume_max_pages,
         template_files=template_files,
         experience_note_hints=experience_note_hints,
+        about_me_note=about_me_note,
         cv_layout_constraints=cv_layout,
         gemini_binary=gemini_binary,
         model=model,

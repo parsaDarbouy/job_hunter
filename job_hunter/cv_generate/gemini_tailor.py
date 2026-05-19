@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 import subprocess
 from dataclasses import dataclass
 from typing import Any, Mapping
 
 from job_hunter.cv_generate.layout_constraints import CvLayoutConstraints
+from job_hunter.json_extract import extract_json_object
 
 _logger = logging.getLogger(__name__)
 
@@ -24,6 +24,7 @@ Rules (strict):
   * sections/objective.tex (about me): word count MUST be >= about_me_word_count.min and <= about_me_word_count.max.
   * Experience \\item bullets across sections/experience.tex and sections/previous.tex: include EXACTLY up to experience_bullets_per_page * resume_max_pages bullets total (never exceed). Prefer job-relevant highlights; use real bullets from resume_yaml only.
   * Each experience \\item: plain-word count MUST be >= experience_bullet_word_count.min and <= experience_bullet_word_count.max. Shorten or split phrasing to comply; do not pad with filler words.
+  * Each experience \\item MUST wrap main keywords in \\textbf{{...}} (2–5 per bullet): technologies, tools, platforms, and role-relevant terms that already appear in resume_yaml or job_description_text (e.g. \\textbf{{AWS}}, \\textbf{{Kubernetes}}, \\textbf{{CI/CD}}). Do not bold entire sentences or words not in the source material.
 - experience_note_hints (when non-empty): optional per-role context from resume.yaml. For each hint, you MAY weave that note into at most ONE bullet for the matching employer—lightly (a short clause only), and only when it fits an existing highlight for that role. Do NOT add a bullet whose sole content is the note. Do NOT expand the note into new responsibilities, metrics, or tools. If the note is irrelevant to the target role or would overcrowd the section, skip it.
 - Populate resume.tex contact macros (\\author, \\phone, \\city, \\email, \\LinkedIn, \\github) from resume_yaml profile when those values exist: profile.phone → \\phone, profile.location → \\city; otherwise keep existing template values.
 - Populate sections/Accomplishments.tex from resume_yaml accomplishments (title, detail, date) when present; use the template's LaTeX structure (\\skills{}, \\textit{}, date on the right).
@@ -57,33 +58,6 @@ class GeminiCvTailorResult:
     company_name: str
     position_title: str
     files: dict[str, str]
-
-
-def _strip_json_fence(text: str) -> str:
-    stripped = text.strip()
-    fence = re.match(r"^```(?:json)?\s*\n?(.*?)\n?```\s*$", stripped, re.DOTALL | re.IGNORECASE)
-    if fence:
-        return fence.group(1).strip()
-    return stripped
-
-
-def _extract_json_object(text: str) -> dict[str, Any]:
-    candidate = _strip_json_fence(text)
-    try:
-        parsed = json.loads(candidate)
-        if isinstance(parsed, dict):
-            return parsed
-    except json.JSONDecodeError:
-        pass
-
-    start = candidate.find("{")
-    end = candidate.rfind("}")
-    if start == -1 or end == -1 or end <= start:
-        raise ValueError("No JSON object found in model response")
-    parsed = json.loads(candidate[start : end + 1])
-    if not isinstance(parsed, dict):
-        raise ValueError("Model JSON root must be an object")
-    return parsed
 
 
 def _coerce_files(value: Any) -> dict[str, str]:
@@ -181,7 +155,7 @@ def tailor_cv_with_gemini_cli(
         raise RuntimeError("Gemini CLI JSON envelope missing response text")
 
     try:
-        parsed = _extract_json_object(response_text)
+        parsed = extract_json_object(response_text)
     except (ValueError, json.JSONDecodeError) as exc:
         raise RuntimeError("Gemini CLI response did not contain a valid JSON object") from exc
 

@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 import subprocess
 from dataclasses import dataclass
 from typing import Any, Mapping
 
 from job_hunter.job_listings.write_jobs_csv import JOB_DESCRIPTION_COLUMN
+from job_hunter.json_extract import extract_json_object
 
 _logger = logging.getLogger(__name__)
 
@@ -43,33 +43,6 @@ class GeminiJobAssessment:
     alignment_percentage: int
     passes: bool
     reason: str
-
-
-def _strip_json_fence(text: str) -> str:
-    stripped = text.strip()
-    fence = re.match(r"^```(?:json)?\s*\n?(.*?)\n?```\s*$", stripped, re.DOTALL | re.IGNORECASE)
-    if fence:
-        return fence.group(1).strip()
-    return stripped
-
-
-def _extract_json_object(text: str) -> dict[str, Any]:
-    candidate = _strip_json_fence(text)
-    try:
-        parsed = json.loads(candidate)
-        if isinstance(parsed, dict):
-            return parsed
-    except json.JSONDecodeError:
-        pass
-
-    start = candidate.find("{")
-    end = candidate.rfind("}")
-    if start == -1 or end == -1 or end <= start:
-        raise ValueError("No JSON object found in model response")
-    parsed = json.loads(candidate[start : end + 1])
-    if not isinstance(parsed, dict):
-        raise ValueError("Model JSON root must be an object")
-    return parsed
 
 
 def _coerce_percentage(value: Any) -> int:
@@ -173,7 +146,7 @@ def assess_job_with_gemini_cli(
         raise RuntimeError("Gemini CLI JSON envelope missing response text")
 
     try:
-        parsed = _extract_json_object(response_text)
+        parsed = extract_json_object(response_text)
     except (ValueError, json.JSONDecodeError) as exc:
         raise RuntimeError("Gemini CLI response did not contain a valid JSON object") from exc
 

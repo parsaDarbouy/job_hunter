@@ -139,7 +139,7 @@ cv_layout:
     max: 32
 ```
 
-``cv_layout`` is manual (preserved across ``resume:ingest``). Gemini must follow these limits for the objective (about me) and experience bullets; Python validates word and bullet counts after tailoring.
+``cv_layout`` is manual (preserved across ``resume:ingest``). Gemini must follow these limits for the objective (about me) and experience bullets; Python validates word and bullet counts after tailoring. Each experience bullet must use ``\\textbf{}`` for main keywords (tools, platforms, role terms from ``resume.yaml`` or the job description).
 
 Run:
 

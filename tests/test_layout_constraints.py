@@ -35,13 +35,33 @@ def test_validate_tailored_layout_accepts_compliant_files() -> None:
         "sections/objective.tex": "One two three four five six seven eight.",
         "sections/experience.tex": (
             r"\begin{zitemize}"
-            r"\item Operated reliable systems with metrics and alerts for on-call."
-            r"\item Improved deployment pipelines using automation and review."
+            r"\item Operated \textbf{reliable} systems with \textbf{metrics} and alerts for on-call."
+            r"\item Improved \textbf{deployment} pipelines using \textbf{automation} and review."
             r"\end{zitemize}"
         ),
         "sections/previous.tex": "",
     }
     validate_tailored_layout(files=files, layout=layout, resume_max_pages=1)
+
+
+def test_validate_tailored_layout_requires_textbf_in_bullets() -> None:
+    layout = CvLayoutConstraints(
+        about_me_words_min=5,
+        about_me_words_max=50,
+        experience_bullets_per_page=2,
+        experience_bullet_words_min=5,
+        experience_bullet_words_max=30,
+    )
+    files = {
+        "sections/objective.tex": "Short summary here today with enough words.",
+        "sections/experience.tex": (
+            r"\begin{zitemize}"
+            r"\item Operated reliable systems with metrics and alerts for on-call."
+            r"\end{zitemize}"
+        ),
+    }
+    with pytest.raises(ValueError, match=r"\\textbf"):
+        validate_tailored_layout(files=files, layout=layout, resume_max_pages=1)
 
 
 def test_validate_tailored_layout_rejects_too_many_bullets() -> None:
@@ -56,8 +76,8 @@ def test_validate_tailored_layout_rejects_too_many_bullets() -> None:
         "sections/objective.tex": "Short summary here today with enough words.",
         "sections/experience.tex": (
             r"\begin{zitemize}"
-            r"\item First bullet with enough words here today."
-            r"\item Second bullet with enough words here today."
+            r"\item \textbf{First} bullet with enough words here today."
+            r"\item \textbf{Second} bullet with enough words here today."
             r"\end{zitemize}"
         ),
     }

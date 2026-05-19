@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
-import re
 import subprocess
 from typing import Any
+
+from job_hunter.json_extract import extract_json_object
 
 _EXTRACTION_PROMPT = """You are a resume extraction engine. Your input is plain text extracted from a PDF resume (it may have line breaks or minor OCR-like noise).
 
@@ -73,33 +74,6 @@ JSON shape (types matter):
 The resume text follows on stdin after a single line containing only: ---RESUME---"""
 
 
-def _strip_json_fence(text: str) -> str:
-    stripped = text.strip()
-    fence = re.match(r"^```(?:json)?\s*\n?(.*?)\n?```\s*$", stripped, re.DOTALL | re.IGNORECASE)
-    if fence:
-        return fence.group(1).strip()
-    return stripped
-
-
-def _extract_json_object(text: str) -> dict[str, Any]:
-    candidate = _strip_json_fence(text)
-    try:
-        parsed = json.loads(candidate)
-        if isinstance(parsed, dict):
-            return parsed
-    except json.JSONDecodeError:
-        pass
-
-    start = candidate.find("{")
-    end = candidate.rfind("}")
-    if start == -1 or end == -1 or end <= start:
-        raise ValueError("No JSON object found in model response")
-    parsed = json.loads(candidate[start : end + 1])
-    if not isinstance(parsed, dict):
-        raise ValueError("Model JSON root must be an object")
-    return parsed
-
-
 def parse_resume_with_gemini_cli(
     cleaned_resume_text: str,
     *,
@@ -163,4 +137,4 @@ def parse_resume_with_gemini_cli(
     if not isinstance(response_text, str) or not response_text.strip():
         raise RuntimeError("Gemini CLI JSON envelope missing response text")
 
-    return _extract_json_object(response_text)
+    return extract_json_object(response_text)

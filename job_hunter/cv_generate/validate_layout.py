@@ -57,6 +57,11 @@ def validate_tailored_layout(
                 f"{layout.experience_bullet_words_min}–{layout.experience_bullet_words_max}: "
                 f"{bullet[:80]}{'…' if len(bullet) > 80 else ''}"
             )
+        if r"\textbf" not in bullet:
+            violations.append(
+                f"{path} bullet must bold main keywords with \\textbf{{}}: "
+                f"{bullet[:80]}{'…' if len(bullet) > 80 else ''}"
+            )
 
     if violations:
         joined = "; ".join(violations)

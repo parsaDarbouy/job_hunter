@@ -7,6 +7,8 @@ from typing import Any, Mapping
 
 import yaml
 
+from job_hunter.resume_ingest.resume_settings import merge_cv_generation_settings
+
 
 def build_resume_document(
     normalized: Mapping[str, Any],
@@ -35,8 +37,9 @@ def write_resume_yaml(document: Mapping[str, Any], output_path: Path) -> None:
     Uses block style, fixed key order from build_resume_document, and no Python tags.
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    merged = merge_cv_generation_settings(document, existing_output_path=output_path)
     payload = yaml.safe_dump(
-        document,
+        merged,
         sort_keys=False,
         allow_unicode=True,
         default_flow_style=False,

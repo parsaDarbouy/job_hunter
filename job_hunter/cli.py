@@ -15,11 +15,6 @@ from job_hunter.paths import (
     default_query_yaml_path,
     default_resume_yaml_path,
 )
-from job_hunter.resume_ingest.normalize import normalize_extracted_resume
-from job_hunter.resume_ingest.pdf_loader import load_pdf_text
-from job_hunter.resume_ingest.resume_parser import parse_resume_with_gemini_cli
-from job_hunter.resume_ingest.text_cleaner import clean_resume_text
-from job_hunter.resume_ingest.yaml_writer import build_resume_document, write_resume_yaml
 
 
 def _iso_date(value: str) -> datetime.date:
@@ -30,6 +25,21 @@ def _iso_date(value: str) -> datetime.date:
 
 
 def _run_resume_ingest(arguments: argparse.Namespace) -> int:
+    for module_name in ("dateutil", "pypdf"):
+        try:
+            __import__(module_name)
+        except ImportError as exc:
+            raise SystemExit(
+                f"resume:ingest requires {module_name!r}. "
+                "From the repo root: pip install -e \".[dev]\""
+            ) from exc
+
+    from job_hunter.resume_ingest.normalize import normalize_extracted_resume
+    from job_hunter.resume_ingest.pdf_loader import load_pdf_text
+    from job_hunter.resume_ingest.resume_parser import parse_resume_with_gemini_cli
+    from job_hunter.resume_ingest.text_cleaner import clean_resume_text
+    from job_hunter.resume_ingest.yaml_writer import build_resume_document, write_resume_yaml
+
     pdf_path = arguments.pdf_path.expanduser().resolve()
     output_path = arguments.output.expanduser().resolve()
 
@@ -220,6 +230,80 @@ def main(argv: list[str] | None = None) -> int:
         help="Print per-job fetch and Gemini diagnostics to stderr",
     )
     filtering.set_defaults(func=_run_jobs_filter)
+
+    def _run_cv_generate(arguments: argparse.Namespace) -> int:
+        from job_hunter.cv_generate.run_cv_generate import run_cv_generate
+
+        logging.basicConfig(
+            level=logging.DEBUG if arguments.debug else logging.INFO,
+            format="%(levelname)s %(message)s",
+            stream=sys.stderr,
+            force=True,
+        )
+
+        pdf_path = run_cv_generate(
+            resume_path=arguments.resume,
+            template_path=arguments.template,
+            output_dir=arguments.output_dir,
+            gemini_binary=arguments.gemini_binary,
+            model=arguments.model,
+            debug=arguments.debug,
+            pdflatex_path=arguments.pdflatex,
+            latex_engine=arguments.latex_engine,
+        )
+        print(pdf_path)
+        return 0
+
+    cv_generate = subparsers.add_parser(
+        "cv:generate",
+        help="Tailor LaTeX CV from resume.yaml and target_job_url, compile to PDF",
+    )
+    cv_generate.add_argument(
+        "--resume",
+        type=Path,
+        default=default_resume_yaml_path(),
+        help=f"Resume YAML with resume_max_pages and target_job_url (default: {default_resume_yaml_path()})",
+    )
+    cv_generate.add_argument(
+        "--template",
+        type=Path,
+        default=None,
+        help="Source LaTeX template directory (default: data/cv_template)",
+    )
+    cv_generate.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Directory for output PDF (default: data/cv)",
+    )
+    cv_generate.add_argument(
+        "--gemini-binary",
+        default="gemini",
+        help="Gemini CLI executable name or path (default: gemini)",
+    )
+    cv_generate.add_argument(
+        "--model",
+        default="flash",
+        help="Gemini CLI model alias or id (default: flash)",
+    )
+    cv_generate.add_argument(
+        "--debug",
+        action="store_true",
+        help="Print Gemini diagnostics to stderr",
+    )
+    cv_generate.add_argument(
+        "--pdflatex",
+        dest="pdflatex",
+        default=None,
+        help="Path to pdflatex (default: PATH, then /Library/TeX/texbin/pdflatex)",
+    )
+    cv_generate.add_argument(
+        "--latex-engine",
+        choices=("pdflatex", "tectonic"),
+        default=None,
+        help="LaTeX engine (default: pdflatex if found, else tectonic)",
+    )
+    cv_generate.set_defaults(func=_run_cv_generate)
 
     namespace = parser.parse_args(argv)
     handler = getattr(namespace, "func", None)

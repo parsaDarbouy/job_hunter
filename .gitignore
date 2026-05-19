@@ -47,3 +47,9 @@ data/*
 !data/.gitkeep
 !data/position.example.yaml
 !data/weblist.example.yaml
+!data/cv_template/
+!data/cv_template/**
+
+# CV generation working tree and outputs
+data/.cv_template/
+data/cv/

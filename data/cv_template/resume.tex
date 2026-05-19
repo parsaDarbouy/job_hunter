@@ -1,0 +1,43 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+
+%====================
+% File:         resume.tex
+% Editor:       https://github.com/TimmyChan
+% Notes:        All formatting is done in TLCresume.sty
+%               All actual content is in the sections/ folder.
+%               Example profile only — replace via cv:generate from resume.yaml.
+%====================
+
+\usepackage{TLCresume}
+%====================
+% CONTACT INFORMATION
+%====================
+\author{Alex Rivera}
+\def\phone{(555) 010-2030}
+\def\city{Portland}
+\def\email{alex.rivera@example.com}
+\def\LinkedIn{alex-rivera-dev} % linkedin.com/in/______
+\def\github{alexrivera-dev} % github username
+\def\role{} % JOB TITLE (cv:generate may set this from the target role)
+
+\begin{document}
+\import{sections/}{_header}
+\import{sections/}{objective}
+
+
+\section{Skills}\import{sections/}{skills}
+
+\section{Accomplishments \& Certifications}
+\import{sections/}{Accomplishments}
+
+\section{Education}
+\import{sections/}{education}
+
+\section{Experience}
+\import{sections/}{experience}
+
+\section{Previous Experience}
+\import{sections/}{previous}
+
+\end{document}

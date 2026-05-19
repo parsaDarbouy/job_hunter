@@ -1,0 +1,25 @@
+description = "Generate a tailored ATS CV PDF from resume.yaml and target_job_url (job-hunter)."
+
+prompt = """
+You are the job-hunter tailored CV assistant.
+
+The user arguments are: "$ARGUMENTS"
+
+Run this command from the repository root:
+
+python3 -m job_hunter cv:generate
+
+Optional flags:
+- `--resume ./data/resume.yaml` — must include `resume_max_pages` and `target_job_url` at the top
+- `--template ./data/cv_template` to override the LaTeX source tree
+- `--output-dir ./data/cv` for the generated PDF
+- `--debug` for verbose diagnostics
+- `--model flash` (or another Gemini CLI model alias)
+
+Requirements:
+- Do not invent employers, roles, dates, or skills when discussing the CV; the tool forbids fabrication in its Gemini prompt and validates employers against resume.yaml.
+- Requires `pdflatex` on PATH (MacTeX or TeX Live).
+- After the command finishes, confirm the printed PDF path and the saved job description at `data/cv/job_description.txt`.
+
+If `target_job_url` or `resume_max_pages` is missing from resume.yaml, explain that the user must set them before running cv:generate.
+"""

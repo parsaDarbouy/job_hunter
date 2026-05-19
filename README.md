@@ -1,6 +1,6 @@
 # Job Hunter
 
-Agentic job-hunting utilities. **Resume ingestion** turns a PDF resume into a normalized `resume.yaml`. **Listing export** reads `weblist.yaml` (job board sources) plus `position.yaml` (your filters), writes a machine-readable `query.yaml` plan (fetch URLs and title-matching matrix), pulls public listings where supported, filters rows against your position criteria, and merges matches into `jobs_export.csv` (new URLs only when the file already exists). **AI job filtering** uses Gemini CLI to review jobs added on a specific date against `resume.yaml` and `position.yaml`, then writes a filtered CSV.
+Agentic job-hunting utilities. **Resume ingestion** turns a PDF resume into a normalized `resume.yaml`. **Listing export** reads `weblist.yaml` (job board sources) plus `position.yaml` (your filters), writes a machine-readable `query.yaml` plan (fetch URLs and title-matching matrix), pulls public listings where supported, filters rows against your position criteria, and merges matches into `jobs_export.csv` (new URLs only when the file already exists). **AI job filtering** uses Gemini CLI to review jobs added on a specific date against `resume.yaml` and `position.yaml`, then writes a filtered CSV. **CV generation** tailors a LaTeX resume from `resume.yaml` and a job posting URL, then compiles an ATS-friendly PDF.
 
 Copy `data/position.example.yaml` → `data/position.yaml` and `data/weblist.example.yaml` → `data/weblist.yaml`, then edit boards, titles, and geography to match your search.
 
@@ -8,6 +8,7 @@ Copy `data/position.example.yaml` → `data/position.yaml` and `data/weblist.exa
 
 - Python 3.11+
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli) installed and authenticated (`gemini auth`)
+- For **`cv:generate`**: [Tectonic](https://tectonic-typesetting.github.io/) (`brew install tectonic`) is preferred (auto-downloads LaTeX packages). `pdflatex` (MacTeX / BasicTeX) is used as a fallback; BasicTeX often needs extra `tlmgr install` packages for this template.
 
 ## Setup
 
@@ -42,6 +43,7 @@ job-hunter resume:ingest ./resume.pdf
 
 **Output file (default `./data/resume.yaml`):** machine-oriented schema:
 
+- `resume_max_pages` and `target_job_url` (optional; set manually for `cv:generate` — preserved across re-ingest when already present)
 - `profile` (name, email, `links.github`, `links.linkedin`)
 - `summary` (`total_years_experience`, `domains`)
 - `skills` (`languages`, `frameworks`, `cloud`, `tools`, `other`) — deduplicated case-insensitively with bucket priority
@@ -117,12 +119,45 @@ python3 -m job_hunter jobs:filter \
 
 **Stderr:** structured `INFO` logs at start and end of the run (`job_filtering.start` / `job_filtering.complete` with `run_id`, counts, paths, and duration). `WARNING` on description fetch failures. With `--debug`, adds per-job assessment lines and Gemini subprocess diagnostics. While jobs are processed, a single-line ASCII progress bar shows `processed/total` and how many rows passed the threshold so far.
 
+## Command: `cv:generate`
+
+Produce a tailored, ATS-friendly PDF resume from **`resume.yaml`** and the job posting at **`target_job_url`**. Gemini CLI rewrites the LaTeX template (example profile in git; your real data comes from YAML at generation time). Python validates that employers in the tailored text exist in `resume.yaml`, then runs `pdflatex`.
+
+Add at the **top** of `data/resume.yaml` (not set by `resume:ingest`):
+
+```yaml
+resume_max_pages: 2
+target_job_url: "https://boards.greenhouse.io/example/jobs/123"
+```
+
+Run:
+
+```bash
+python3 -m job_hunter cv:generate
+python3 -m job_hunter cv:generate --resume ./data/resume.yaml --debug --model flash
+```
+
+**Flow:** fetch job description → `data/cv/job_description.txt`; copy `data/cv_template/` → `data/.cv_template/` (working tree for AI edits); Gemini tailors section files; compile `resume.tex`; write `data/cv/{companyName}_{position}.pdf`.
+
+**Stdout:** absolute path to the generated PDF.
+
+**Anti-hallucination:** the Gemini prompt forbids inventing employers, roles, dates, or skills; Python rejects tailored LaTeX that references employers not listed under `experience` in `resume.yaml`.
+
+**LaTeX engine:** default tries Tectonic, then `pdflatex`. Pin with `--latex-engine tectonic` or `--latex-engine pdflatex`. Environment: `JOB_HUNTER_LATEX_ENGINE`, `JOB_HUNTER_PDFLATEX`, `JOB_HUNTER_TECTONIC`.
+
+### Gemini CLI custom command
+
+See `.gemini/commands/cv-generate.toml`.
+
 ## Layout
 
 | Path | Role |
 |------|------|
-| `data/` | Default directory for CLI-generated files (gitignored contents; see `data/.gitkeep`). Tracked templates: `data/position.example.yaml`, `data/weblist.example.yaml`. Generated: `data/query.yaml`, `data/jobs_export.csv`, `data/resume.yaml`, etc. |
-| `job_hunter/cli.py` | CLI entry (`resume:ingest`, `listings:export`, `jobs:filter`) |
+| `data/` | Default directory for CLI-generated files (gitignored contents; see `data/.gitkeep`). Tracked templates: `data/position.example.yaml`, `data/weblist.example.yaml`, `data/cv_template/`. Generated: `data/query.yaml`, `data/jobs_export.csv`, `data/resume.yaml`, `data/.cv_template/`, `data/cv/`, etc. |
+| `data/cv_template/` | Tracked LaTeX CV template (`resume.tex`, `sections/`, `TLCresume.sty`; example profile only) |
+| `data/.cv_template/` | Gitignored working copy edited by Gemini before each compile |
+| `data/cv/` | Gitignored tailored PDFs and `job_description.txt` |
+| `job_hunter/cli.py` | CLI entry (`resume:ingest`, `listings:export`, `jobs:filter`, `cv:generate`) |
 | `job_hunter/paths.py` | Shared default paths (`DATA_DIRECTORY`, default resume / weblist / position / query / CSV paths) |
 | `job_hunter/job_listings/` | Listing export: YAML plan, HTTP fetchers, filters, CSV writer |
 | `job_hunter/job_filtering/` | Date-scoped AI filtering: job page text extraction, Gemini scoring, filtered CSV writer |
@@ -133,13 +168,16 @@ python3 -m job_hunter jobs:filter \
 | `job_hunter/resume_ingest/resume_parser.py` | Gemini CLI subprocess + JSON extraction |
 | `job_hunter/resume_ingest/normalize.py` | Durations, dedupe, stable ordering |
 | `job_hunter/resume_ingest/yaml_writer.py` | Canonical YAML serialization |
+| `job_hunter/resume_ingest/resume_settings.py` | `resume_max_pages` / `target_job_url` merge on ingest |
+| `job_hunter/cv_generate/` | CV tailoring: template copy, job fetch, Gemini LaTeX edits, validation, `pdflatex` |
 
-`.gitignore` also excludes typical Python noise (extra venv names, mypy/ruff/pytest caches, packaging outputs, coverage, `.env`, `.DS_Store`) and keeps **resume intake private**: `resume.pdf` and `resume.yaml` match in any folder, plus everything under `data/` except `data/.gitkeep`, `data/position.example.yaml`, and `data/weblist.example.yaml`.
+`.gitignore` also excludes typical Python noise (extra venv names, mypy/ruff/pytest caches, packaging outputs, coverage, `.env`, `.DS_Store`) and keeps **resume intake private**: `resume.pdf` and `resume.yaml` match in any folder, plus everything under `data/` except `data/.gitkeep`, `data/position.example.yaml`, `data/weblist.example.yaml`, and `data/cv_template/`.
 
 ## Determinism and hallucinations
 
 - **YAML on disk:** For a fixed JSON payload from Gemini, normalization and `yaml.safe_dump` (fixed key order, sorted lists where applicable) are deterministic.
 - **Model output:** Different Gemini runs can still differ. The extraction prompt forbids fabrication; empty strings and zeros are used when fields are unknown. Use the same model and CLI version for best repeatability.
+- **CV tailoring:** Gemini may rephrase bullets but must not add facts; employer names in tailored LaTeX are checked against `resume.yaml` before compile.
 
 ## Tests
 
@@ -151,3 +189,4 @@ pytest
 
 - Text-based PDFs only; scanned PDFs need OCR first.
 - Encrypted PDFs are not supported without a password workflow.
+- `cv:generate` requires `pdflatex` and a working LaTeX install; complex template errors may need manual fixes in `data/.cv_template/`.

@@ -8,6 +8,7 @@ from job_hunter.cv_generate.latex_text_metrics import (
     cap_latex_item_bullets,
     count_latex_item_bullets,
     count_plain_words,
+    count_textbf_spans,
     extract_zitemize_bullets,
 )
 from job_hunter.cv_generate.layout_constraints import CvLayoutConstraints, parse_cv_layout_constraints
@@ -40,13 +41,33 @@ def test_validate_tailored_layout_accepts_compliant_files() -> None:
         "sections/objective.tex": "One two three four five six seven eight.",
         "sections/experience.tex": (
             r"\begin{zitemize}"
-            r"\item Operated \textbf{reliable} systems with \textbf{metrics} and alerts for on-call."
-            r"\item Improved \textbf{deployment} pipelines using \textbf{automation} and review."
+            r"\item Operated \textbf{reliable} systems with metrics and alerts for on-call."
+            r"\item Improved \textbf{deployment} pipelines using automation and review."
             r"\end{zitemize}"
         ),
         "sections/previous.tex": "",
     }
     validate_tailored_layout(files=files, layout=layout, resume_max_pages=1)
+
+
+def test_validate_tailored_layout_rejects_too_many_textbf_in_bullet() -> None:
+    layout = CvLayoutConstraints(
+        about_me_words_min=5,
+        about_me_words_max=50,
+        experience_bullets_per_page=2,
+        experience_bullet_words_min=5,
+        experience_bullet_words_max=30,
+    )
+    files = {
+        "sections/objective.tex": "Short summary here today with enough words.",
+        "sections/experience.tex": (
+            r"\begin{zitemize}"
+            r"\item Operated \textbf{one} and \textbf{two} and \textbf{three} systems here today."
+            r"\end{zitemize}"
+        ),
+    }
+    with pytest.raises(ValueError, match="1–2"):
+        validate_tailored_layout(files=files, layout=layout, resume_max_pages=1)
 
 
 def test_validate_tailored_layout_requires_textbf_in_bullets() -> None:
@@ -86,7 +107,27 @@ def test_validate_tailored_layout_rejects_too_many_bullets() -> None:
             r"\end{zitemize}"
         ),
     }
-    with pytest.raises(ValueError, match="must be at most 1"):
+    with pytest.raises(ValueError, match="must be exactly 1"):
+        validate_tailored_layout(files=files, layout=layout, resume_max_pages=1)
+
+
+def test_validate_tailored_layout_rejects_too_few_bullets() -> None:
+    layout = CvLayoutConstraints(
+        about_me_words_min=5,
+        about_me_words_max=50,
+        experience_bullets_per_page=2,
+        experience_bullet_words_min=5,
+        experience_bullet_words_max=30,
+    )
+    files = {
+        "sections/objective.tex": "Short summary here today with enough words.",
+        "sections/experience.tex": (
+            r"\begin{zitemize}"
+            r"\item \textbf{Only} one bullet with enough words here today."
+            r"\end{zitemize}"
+        ),
+    }
+    with pytest.raises(ValueError, match="must be exactly 2"):
         validate_tailored_layout(files=files, layout=layout, resume_max_pages=1)
 
 
@@ -110,6 +151,12 @@ def test_layout_as_dict_includes_max_total_bullets() -> None:
     )
     payload = layout.as_dict(resume_max_pages=1)
     assert payload["experience_max_total_bullets"] == 17
+
+
+def test_count_textbf_spans() -> None:
+    assert count_textbf_spans(r"\item One \textbf{AWS} only here.") == 1
+    assert count_textbf_spans(r"\item \textbf{A} and \textbf{B} here.") == 2
+    assert count_textbf_spans(r"\item No bold here today.") == 0
 
 
 def test_extract_zitemize_bullets() -> None:

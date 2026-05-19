@@ -140,7 +140,7 @@ cv_layout:
 about_me_note: "Optional angle for the objective / about-me paragraph (preserved across resume:ingest)."
 ```
 
-``cv_layout`` and ``about_me_note`` are manual (preserved across ``resume:ingest``). Gemini must follow these limits for the objective (about me) and experience bullets; Python caps excess ``\\item`` lines in ``sections/experience.tex`` to ``experience_bullets_per_page × resume_max_pages``, then validates word and bullet counts. Each experience bullet must use ``\\textbf{}`` for main keywords (tools, platforms, role terms from ``resume.yaml`` or the job description).
+``cv_layout`` and ``about_me_note`` are manual (preserved across ``resume:ingest``). Gemini must follow these limits for the objective (about me) and experience bullets; ``sections/experience.tex`` must contain **exactly** ``experience_bullets_per_page × resume_max_pages`` ``\\item`` lines (Python caps excess lines, then validation rejects if the count is too low or too high). Experience bullets are **verbatim** ``resume.yaml`` highlights (selection and reorder only—no rephrasing); each uses exactly 1–2 ``\\textbf{}`` keywords on words already in the highlight.
 
 Run:
 
@@ -159,7 +159,7 @@ python3 -m job_hunter cv:generate --resume ./data/resume.yaml --debug --model fl
 
 **Previous experience:** `sections/previous.tex` is compact only (`\skills{title}`, `\textit{employer}`, `\textit{location}`, dates)—no bullet lists. Validation rejects `\item` / `zitemize` there.
 
-**Experience notes:** optional `note` on an `experience` entry (manual context not worth a full bullet). `cv:generate` passes these as `experience_note_hints` so Gemini may reflect the note in at most one bullet in **Experience** only—briefly, without inventing new facts.
+**Experience notes:** optional `note` on an `experience` entry (manual context not worth a full bullet). `cv:generate` passes these as `experience_note_hints` so Gemini can prefer selecting highlights that already match the note—without editing bullet text.
 
 **LaTeX engine:** default tries Tectonic, then `pdflatex`. Pin with `--latex-engine tectonic` or `--latex-engine pdflatex`. Environment: `JOB_HUNTER_LATEX_ENGINE`, `JOB_HUNTER_PDFLATEX`, `JOB_HUNTER_TECTONIC`.
 
@@ -195,7 +195,7 @@ See `.gemini/commands/cv-generate.toml`.
 
 - **YAML on disk:** For a fixed JSON payload from Gemini, normalization and `yaml.safe_dump` (fixed key order, sorted lists where applicable) are deterministic.
 - **Model output:** Different Gemini runs can still differ. The extraction prompt forbids fabrication; empty strings and zeros are used when fields are unknown. Use the same model and CLI version for best repeatability.
-- **CV tailoring:** Gemini may rephrase bullets but must not add facts; employer names in tailored LaTeX are checked against `resume.yaml` before compile.
+- **CV tailoring:** Experience bullets are chosen verbatim from `resume.yaml` highlights (no rephrasing); other sections may be tailored. Employer names in tailored LaTeX are checked against `resume.yaml` before compile.
 
 ## Tests
 

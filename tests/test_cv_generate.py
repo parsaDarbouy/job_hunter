@@ -219,6 +219,10 @@ def test_run_cv_generate_end_to_end_mocked(tmp_path: Path) -> None:
     description_path = output_dir / "job_description.txt"
 
     def fake_tailor(**_kwargs: object) -> GeminiCvTailorResult:
+        experience_items = "".join(
+            rf"\item Operated \textbf{{systems}} number {index} with metrics and alerts."
+            for index in range(20)
+        )
         return GeminiCvTailorResult(
             company_name="Acme Corp",
             position_title="Site Reliability Engineer",
@@ -226,7 +230,12 @@ def test_run_cv_generate_end_to_end_mocked(tmp_path: Path) -> None:
                 "resume.tex": "\\documentclass{article}",
                 "sections/objective.tex": "Short objective with enough words for validation here.",
                 "sections/skills.tex": "% ok",
-                "sections/experience.tex": r"\subtext{Northwind Systems \hfill Remote}",
+                "sections/experience.tex": (
+                    r"\subtext{Northwind Systems \hfill Remote}"
+                    r"\begin{zitemize}"
+                    + experience_items
+                    + r"\end{zitemize}"
+                ),
                 "sections/education.tex": "% ok",
                 "sections/previous.tex": "% ok",
                 "sections/Accomplishments.tex": "% ok",

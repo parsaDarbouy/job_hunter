@@ -19,6 +19,11 @@ def strip_latex_to_plain_text(latex: str) -> str:
     return text.strip()
 
 
+def count_textbf_spans(latex: str) -> int:
+    """Count ``\\textbf{...}`` occurrences in a LaTeX fragment."""
+    return len(re.findall(r"\\textbf\{", latex))
+
+
 def count_plain_words(text: str) -> int:
     plain = strip_latex_to_plain_text(text)
     if not plain:

@@ -6,6 +6,7 @@ from typing import Mapping
 
 from job_hunter.cv_generate.latex_text_metrics import (
     count_plain_words,
+    count_textbf_spans,
     extract_zitemize_bullets,
     strip_latex_to_plain_text,
 )
@@ -39,12 +40,12 @@ def validate_tailored_layout(
     for bullet in extract_zitemize_bullets(experience_tex):
         all_bullets.append(("sections/experience.tex", bullet))
 
-    max_bullets = layout.max_total_experience_bullets(resume_max_pages)
+    required_bullets = layout.max_total_experience_bullets(resume_max_pages)
     bullet_count = len(all_bullets)
-    if bullet_count > max_bullets:
+    if bullet_count != required_bullets:
         violations.append(
             f"sections/experience.tex has {bullet_count} \\item lines; "
-            f"must be at most {max_bullets} "
+            f"must be exactly {required_bullets} "
             f"(experience_bullets_per_page={layout.experience_bullets_per_page} × "
             f"resume_max_pages={resume_max_pages})"
         )
@@ -57,9 +58,10 @@ def validate_tailored_layout(
                 f"{layout.experience_bullet_words_min}–{layout.experience_bullet_words_max}: "
                 f"{bullet[:80]}{'…' if len(bullet) > 80 else ''}"
             )
-        if r"\textbf" not in bullet:
+        bold_count = count_textbf_spans(bullet)
+        if bold_count < 1 or bold_count > 2:
             violations.append(
-                f"{path} bullet must bold main keywords with \\textbf{{}}: "
+                f"{path} bullet must have 1–2 \\textbf{{}} keywords (found {bold_count}): "
                 f"{bullet[:80]}{'…' if len(bullet) > 80 else ''}"
             )
 

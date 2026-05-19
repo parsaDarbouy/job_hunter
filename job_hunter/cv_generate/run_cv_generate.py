@@ -20,6 +20,7 @@ from job_hunter.cv_generate.template_copy import copy_cv_template
 from job_hunter.cv_generate.template_files import read_editable_template_files, write_tailored_files
 from job_hunter.cv_generate.layout_constraints import parse_cv_layout_constraints
 from job_hunter.cv_generate.validate_layout import validate_tailored_layout
+from job_hunter.cv_generate.validate_previous import validate_previous_experience_format
 from job_hunter.cv_generate.validate_tailored import validate_employers_in_latex
 from job_hunter.paths import (
     cv_output_dir,
@@ -111,6 +112,7 @@ def run_cv_generate(
         resume_document=resume_document,
         files=tailor_result.files,
     )
+    validate_previous_experience_format(tailor_result.files)
     validate_tailored_layout(
         files=tailor_result.files,
         layout=cv_layout,

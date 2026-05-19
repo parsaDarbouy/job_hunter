@@ -34,12 +34,10 @@ def validate_tailored_layout(
             f"{layout.about_me_words_min}–{layout.about_me_words_max}"
         )
 
-    experience_paths = ("sections/experience.tex", "sections/previous.tex")
+    experience_tex = files.get("sections/experience.tex", "")
     all_bullets: list[tuple[str, str]] = []
-    for path in experience_paths:
-        content = files.get(path, "")
-        for bullet in extract_zitemize_bullets(content):
-            all_bullets.append((path, bullet))
+    for bullet in extract_zitemize_bullets(experience_tex):
+        all_bullets.append(("sections/experience.tex", bullet))
 
     max_bullets = layout.max_total_experience_bullets(resume_max_pages)
     if len(all_bullets) > max_bullets:

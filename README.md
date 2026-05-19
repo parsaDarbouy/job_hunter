@@ -144,6 +144,8 @@ python3 -m job_hunter cv:generate --resume ./data/resume.yaml --debug --model fl
 
 **Anti-hallucination:** the Gemini prompt forbids inventing employers, roles, dates, or skills; Python rejects tailored LaTeX that references employers not listed under `experience` in `resume.yaml`.
 
+**Experience notes:** optional `note` on an `experience` entry (manual context not worth a full bullet). `cv:generate` passes these as `experience_note_hints` so Gemini may reflect the note in at most one existing bullet for that employer—briefly, without inventing new facts.
+
 **LaTeX engine:** default tries Tectonic, then `pdflatex`. Pin with `--latex-engine tectonic` or `--latex-engine pdflatex`. Environment: `JOB_HUNTER_LATEX_ENGINE`, `JOB_HUNTER_PDFLATEX`, `JOB_HUNTER_TECTONIC`.
 
 ### Gemini CLI custom command

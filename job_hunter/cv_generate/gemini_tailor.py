@@ -18,6 +18,7 @@ Rules (strict):
 - Use ONLY facts present in resume_yaml and job_description_text. Do not fabricate experience.
 - FORBIDDEN: new employers, job titles, employment dates, degrees, certifications, tools, metrics, or projects not supported by resume_yaml.
 - ALLOWED: rephrase existing highlights; reorder bullets; emphasize skills already listed in resume_yaml; bold keywords that already appear in resume_yaml or job_description_text; tighten the objective; omit or shorten content to respect resume_max_pages.
+- experience_note_hints (when non-empty): optional per-role context from resume.yaml. For each hint, you MAY weave that note into at most ONE bullet for the matching employer—lightly (a short clause only), and only when it fits an existing highlight for that role. Do NOT add a bullet whose sole content is the note. Do NOT expand the note into new responsibilities, metrics, or tools. If the note is irrelevant to the target role or would overcrowd the section, skip it.
 - Populate resume.tex contact macros (\\author, \\phone, \\city, \\email, \\LinkedIn, \\github) from resume_yaml profile when those values exist: profile.phone → \\phone, profile.location → \\city; otherwise keep existing template values.
 - Populate sections/Accomplishments.tex from resume_yaml accomplishments (title, detail, date) when present; use the template's LaTeX structure (\\skills{}, \\textit{}, date on the right).
 - Preserve each file's LaTeX structure (\\documentclass, \\begin{document}, \\import-compatible section wrappers, \\subsection, \\subtext, zitemize, etc.).
@@ -98,6 +99,7 @@ def tailor_cv_with_gemini_cli(
     job_description_text: str,
     resume_max_pages: int,
     template_files: Mapping[str, str],
+    experience_note_hints: list[dict[str, str]] | None = None,
     gemini_binary: str = "gemini",
     model: str = "flash",
     debug: bool = False,
@@ -108,12 +110,14 @@ def tailor_cv_with_gemini_cli(
     Raises RuntimeError on CLI failures or invalid JSON.
     Raises FileNotFoundError if the gemini binary is missing.
     """
-    input_payload = {
+    input_payload: dict[str, Any] = {
         "resume_max_pages": resume_max_pages,
         "resume_yaml": resume_yaml_text,
         "job_description_text": job_description_text,
         "template_files": dict(template_files),
     }
+    if experience_note_hints:
+        input_payload["experience_note_hints"] = experience_note_hints
     stdin_payload = "---CV-GENERATE-INPUT---\n" + json.dumps(input_payload, ensure_ascii=False)
     command = [
         gemini_binary,

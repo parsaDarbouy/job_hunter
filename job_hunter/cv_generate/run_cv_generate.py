@@ -11,6 +11,7 @@ from typing import Callable
 
 import yaml
 
+from job_hunter.cv_generate.experience_notes import collect_experience_notes
 from job_hunter.cv_generate.filename import build_cv_pdf_filename
 from job_hunter.cv_generate.gemini_tailor import GeminiCvTailorResult, tailor_cv_with_gemini_cli
 from job_hunter.cv_generate.job_description import fetch_and_save_job_description
@@ -84,11 +85,14 @@ def run_cv_generate(
     )
     template_files = read_editable_template_files(working_dir)
 
+    experience_note_hints = collect_experience_notes(resume_document)
+
     tailor_result = tailor_cv(
         resume_yaml_text=resume_yaml_text,
         job_description_text=job_description_text,
         resume_max_pages=resume_max_pages,
         template_files=template_files,
+        experience_note_hints=experience_note_hints,
         gemini_binary=gemini_binary,
         model=model,
         debug=debug,

@@ -119,6 +119,45 @@ def test_copy_cv_template_replaces_working_dir(tmp_path: Path) -> None:
     assert not (working / "stale.tex").exists()
 
 
+def test_validate_employers_accepts_shortened_company_from_resume() -> None:
+    resume = {
+        "experience": [
+            {"company": "Rahkar Andishan Tose Fanavari Raya Shiraz", "title": "DevOps"},
+        ],
+    }
+    files = {
+        "sections/previous.tex": (
+            r"\textit{Rahkar Andishan Tose Fanavari Raya Shiraz}, \textit{Shiraz} \hfill {\bf 2023}"
+        ),
+    }
+    validate_employers_in_latex(resume_document=resume, files=files)
+
+
+def test_validate_employers_ignores_location_slot_city() -> None:
+    resume = {
+        "profile": {"location": "Vancouver"},
+        "experience": [
+            {"company": "Rahkar Andishan Tose Fanavari Raya Shiraz", "title": "DevOps"},
+        ],
+    }
+    files = {
+        "sections/previous.tex": (
+            r"\textit{Rahkar Andishan Tose Fanavari Raya Shiraz}, \textit{Shiraz} \hfill {\bf 2023}"
+        ),
+    }
+    validate_employers_in_latex(resume_document=resume, files=files)
+
+
+def test_validate_employers_ignores_remote_in_subtext_location() -> None:
+    resume = {
+        "experience": [{"company": "Kleros", "title": "SRE"}],
+    }
+    files = {
+        "sections/experience.tex": r"\subtext{Kleros \hfill Remote}",
+    }
+    validate_employers_in_latex(resume_document=resume, files=files)
+
+
 def test_validate_employers_rejects_unknown_company() -> None:
     resume = {
         "experience": [{"company": "Northwind Systems", "title": "SRE"}],

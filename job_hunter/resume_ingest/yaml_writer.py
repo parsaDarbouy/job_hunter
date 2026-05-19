@@ -23,6 +23,7 @@ def build_resume_document(
         "skills": normalized["skills"],
         "experience": normalized["experience"],
         "education": normalized["education"],
+        "accomplishments": list(normalized.get("accomplishments") or []),
         "metadata": {
             "parsed_by": parsed_by,
             "source_file": source_file,

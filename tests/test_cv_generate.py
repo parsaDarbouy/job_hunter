@@ -33,7 +33,14 @@ def test_merge_cv_generation_settings_preserves_top_level_fields(tmp_path: Path)
     )
     document = build_resume_document(
         {
-            "profile": {"name": "New", "email": "", "links": {"github": "", "linkedin": ""}},
+            "profile": {
+                "name": "New",
+                "email": "",
+                "phone": "",
+                "location": "",
+                "links": {"github": "", "linkedin": ""},
+            },
+            "accomplishments": [],
             "summary": {"total_years_experience": None, "domains": []},
             "skills": {
                 "languages": [],
@@ -63,7 +70,14 @@ def test_write_resume_yaml_preserves_cv_settings(tmp_path: Path) -> None:
     )
     document = build_resume_document(
         {
-            "profile": {"name": "Updated", "email": "", "links": {"github": "", "linkedin": ""}},
+            "profile": {
+                "name": "Updated",
+                "email": "",
+                "phone": "",
+                "location": "",
+                "links": {"github": "", "linkedin": ""},
+            },
+            "accomplishments": [],
             "summary": {"total_years_experience": None, "domains": []},
             "skills": {
                 "languages": [],

@@ -44,11 +44,12 @@ job-hunter resume:ingest ./resume.pdf
 **Output file (default `./data/resume.yaml`):** machine-oriented schema:
 
 - `resume_max_pages` and `target_job_url` (optional; set manually for `cv:generate` — preserved across re-ingest when already present)
-- `profile` (name, email, `links.github`, `links.linkedin`)
+- `profile` (name, email, phone, location, `links.github`, `links.linkedin`)
 - `summary` (`total_years_experience`, `domains`)
 - `skills` (`languages`, `frameworks`, `cloud`, `tools`, `other`) — deduplicated case-insensitively with bucket priority
 - `experience` (with `duration_months` computed from dates when parsable)
 - `education`
+- `accomplishments` (certifications, awards, speaking: `title`, `detail`, `date`)
 - `metadata` (`parsed_by`, `source_file`)
 
 ### Gemini CLI custom command

@@ -18,7 +18,8 @@ Rules (strict):
 - Use ONLY facts present in resume_yaml and job_description_text. Do not fabricate experience.
 - FORBIDDEN: new employers, job titles, employment dates, degrees, certifications, tools, metrics, or projects not supported by resume_yaml.
 - ALLOWED: rephrase existing highlights; reorder bullets; emphasize skills already listed in resume_yaml; bold keywords that already appear in resume_yaml or job_description_text; tighten the objective; omit or shorten content to respect resume_max_pages.
-- Populate resume.tex contact macros (\\author, \\phone, \\city, \\email, \\LinkedIn, \\github) from resume_yaml profile when those values exist; otherwise keep existing template values.
+- Populate resume.tex contact macros (\\author, \\phone, \\city, \\email, \\LinkedIn, \\github) from resume_yaml profile when those values exist: profile.phone → \\phone, profile.location → \\city; otherwise keep existing template values.
+- Populate sections/Accomplishments.tex from resume_yaml accomplishments (title, detail, date) when present; use the template's LaTeX structure (\\skills{}, \\textit{}, date on the right).
 - Preserve each file's LaTeX structure (\\documentclass, \\begin{document}, \\import-compatible section wrappers, \\subsection, \\subtext, zitemize, etc.).
 - Escape LaTeX special characters in plain text: &, %, $, #, _, {, }, ~, ^, \\.
 - Keep the CV within resume_max_pages when compiled (prefer fewer bullets and shorter sections when the limit is 1).

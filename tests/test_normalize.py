@@ -60,3 +60,41 @@ def test_total_years_null_becomes_zero() -> None:
     }
     normalized = normalize_extracted_resume(extracted)
     assert normalized["summary"]["total_years_experience"] == 0
+
+
+def test_profile_phone_and_location() -> None:
+    extracted = {
+        "profile": {
+            "name": "Alex Rivera",
+            "email": "alex@example.com",
+            "phone": "+1 555-010-2030",
+            "location": "Edmonton, AB",
+            "github": "alex-dev",
+            "linkedin": "alex-rivera",
+        },
+        "summary": {"total_years_experience": None, "domains": []},
+        "skills": {k: [] for k in ("languages", "frameworks", "cloud", "tools", "other")},
+        "experience": [],
+        "education": [],
+    }
+    normalized = normalize_extracted_resume(extracted)
+    assert normalized["profile"]["phone"] == "+1 555-010-2030"
+    assert normalized["profile"]["location"] == "Edmonton, AB"
+
+
+def test_accomplishments_sorted_and_deduped() -> None:
+    extracted = {
+        "profile": {},
+        "summary": {"total_years_experience": None, "domains": []},
+        "skills": {k: [] for k in ("languages", "frameworks", "cloud", "tools", "other")},
+        "experience": [],
+        "education": [],
+        "accomplishments": [
+            {"title": "AWS Certified Cloud Practitioner", "detail": "AWS", "date": "2023"},
+            {"title": "AWS Certified Cloud Practitioner", "detail": "duplicate", "date": "2022"},
+            {"title": "Speaker", "detail": "Guild talk", "date": "2024"},
+        ],
+    }
+    normalized = normalize_extracted_resume(extracted)
+    titles = [row["title"] for row in normalized["accomplishments"]]
+    assert titles == ["Speaker", "AWS Certified Cloud Practitioner"]

@@ -19,12 +19,16 @@ Rules (strict):
 - experience array: most recent first when the resume makes order obvious; otherwise preserve resume order.
 - Date fields: prefer "YYYY-MM" when month is known; else "YYYY", else "".
 - highlights: bullet strings copied or lightly shortened from the resume; no new claims.
+- profile.phone and profile.location: copy only when explicitly stated in the resume header or contact block (do not infer from employers or education).
+- accomplishments: certifications, licenses, awards, speaking engagements, and similar items from a dedicated section or clearly labeled entries. One object per item; no fabrication.
 
 JSON shape (types matter):
 {
   "profile": {
     "name": "",
     "email": "",
+    "phone": "",
+    "location": "",
     "github": "",
     "linkedin": ""
   },
@@ -55,6 +59,13 @@ JSON shape (types matter):
       "field": "",
       "start_date": "",
       "end_date": ""
+    }
+  ],
+  "accomplishments": [
+    {
+      "title": "",
+      "detail": "",
+      "date": ""
     }
   ]
 }

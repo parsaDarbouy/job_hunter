@@ -207,6 +207,35 @@ def normalize_extracted_resume(
         reverse=True,
     )
 
+    accomplishments_out: list[dict[str, str]] = []
+    seen_accomplishment_titles: set[str] = set()
+    for row in extracted.get("accomplishments") or []:
+        if not isinstance(row, dict):
+            continue
+        title = _coerce_str(row.get("title"))
+        detail = _coerce_str(row.get("detail"))
+        date_label = _coerce_str(row.get("date"))
+        if not title and not detail:
+            continue
+        dedupe_key = title.lower() or detail.lower()
+        if dedupe_key in seen_accomplishment_titles:
+            continue
+        seen_accomplishment_titles.add(dedupe_key)
+        accomplishments_out.append(
+            {
+                "title": title,
+                "detail": detail,
+                "date": date_label,
+            }
+        )
+    accomplishments_out.sort(
+        key=lambda row: (
+            _parse_partial_date(str(row.get("date")), is_end=True, reference_now=now) or (0, 0),
+            row.get("title", "").lower(),
+        ),
+        reverse=True,
+    )
+
     years = summary_in.get("total_years_experience")
     if years is None or years == "":
         total_years_numeric: int | float = 0
@@ -227,6 +256,8 @@ def normalize_extracted_resume(
         "profile": {
             "name": _coerce_str(profile_in.get("name")),
             "email": _coerce_str(profile_in.get("email")),
+            "phone": _coerce_str(profile_in.get("phone")),
+            "location": _coerce_str(profile_in.get("location")),
             "links": {
                 "github": _coerce_str(profile_in.get("github")),
                 "linkedin": _coerce_str(profile_in.get("linkedin")),
@@ -239,6 +270,7 @@ def normalize_extracted_resume(
         "skills": skills_out,
         "experience": experience_out,
         "education": education_out,
+        "accomplishments": accomplishments_out,
     }
 
 

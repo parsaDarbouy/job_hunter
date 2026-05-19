@@ -86,7 +86,7 @@ You can merge singles + lists + registry on one row; tokens are de-duplicated. F
 
 ## Command: `jobs:filter`
 
-Review exported jobs with **Gemini CLI** one by one. The command only evaluates rows where `added_to_list_date` equals the date you pass, so each listing batch can be processed once. If `data/jobs_export.csv` does not yet have the final `job_description` column, or a matching row has an empty value, the command fetches the job URL, extracts readable page text, stores it back in `jobs_export.csv`, and sends that description to Gemini.
+Review exported jobs with **Gemini CLI** one by one. The command only evaluates rows where `added_to_list_date` equals the date you pass, so each listing batch can be processed once. If `data/jobs_export.csv` does not yet have the final `job_description` column, or a matching row has an empty value, the command fetches the job URL, extracts readable page text, stores it back in `jobs_export.csv`, and sends that description to Gemini. When HTML is empty (for example bot-protected Greenhouse career pages with `?gh_jid=`), it falls back to the public Greenhouse boards API using the job id and an inferred board token from the host (`careers.{token}.com` or `boards.greenhouse.io/{token}/jobs/{id}`).
 
 Add or edit the threshold in `data/position.yaml`:
 

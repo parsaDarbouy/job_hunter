@@ -157,6 +157,11 @@ def test_run_cv_generate_end_to_end_mocked(tmp_path: Path) -> None:
             {
                 "resume_max_pages": 2,
                 "target_job_url": "https://example.com/jobs/99",
+                "cv_layout": {
+                    "about_me_word_count": {"min": 5, "max": 100},
+                    "experience_bullets_per_page": 10,
+                    "experience_bullet_word_count": {"min": 3, "max": 50},
+                },
                 "profile": {"name": "Alex", "email": "a@example.com", "links": {}},
                 "summary": {},
                 "skills": {},
@@ -178,7 +183,7 @@ def test_run_cv_generate_end_to_end_mocked(tmp_path: Path) -> None:
             position_title="Site Reliability Engineer",
             files={
                 "resume.tex": "\\documentclass{article}",
-                "sections/objective.tex": "% ok",
+                "sections/objective.tex": "Short objective with enough words for validation here.",
                 "sections/skills.tex": "% ok",
                 "sections/experience.tex": r"\subtext{Northwind Systems \hfill Remote}",
                 "sections/education.tex": "% ok",

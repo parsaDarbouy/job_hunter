@@ -9,6 +9,8 @@ import subprocess
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from job_hunter.cv_generate.layout_constraints import CvLayoutConstraints
+
 _logger = logging.getLogger(__name__)
 
 _TAILOR_PROMPT = """You are a CV tailoring engine for ATS-friendly LaTeX resumes.
@@ -18,6 +20,10 @@ Rules (strict):
 - Use ONLY facts present in resume_yaml and job_description_text. Do not fabricate experience.
 - FORBIDDEN: new employers, job titles, employment dates, degrees, certifications, tools, metrics, or projects not supported by resume_yaml.
 - ALLOWED: rephrase existing highlights; reorder bullets; emphasize skills already listed in resume_yaml; bold keywords that already appear in resume_yaml or job_description_text; tighten the objective; omit or shorten content to respect resume_max_pages.
+- cv_layout_constraints (STRICT — must match exactly; count plain words with LaTeX markup removed):
+  * sections/objective.tex (about me): word count MUST be >= about_me_word_count.min and <= about_me_word_count.max.
+  * Experience \\item bullets across sections/experience.tex and sections/previous.tex: include EXACTLY up to experience_bullets_per_page * resume_max_pages bullets total (never exceed). Prefer job-relevant highlights; use real bullets from resume_yaml only.
+  * Each experience \\item: plain-word count MUST be >= experience_bullet_word_count.min and <= experience_bullet_word_count.max. Shorten or split phrasing to comply; do not pad with filler words.
 - experience_note_hints (when non-empty): optional per-role context from resume.yaml. For each hint, you MAY weave that note into at most ONE bullet for the matching employer—lightly (a short clause only), and only when it fits an existing highlight for that role. Do NOT add a bullet whose sole content is the note. Do NOT expand the note into new responsibilities, metrics, or tools. If the note is irrelevant to the target role or would overcrowd the section, skip it.
 - Populate resume.tex contact macros (\\author, \\phone, \\city, \\email, \\LinkedIn, \\github) from resume_yaml profile when those values exist: profile.phone → \\phone, profile.location → \\city; otherwise keep existing template values.
 - Populate sections/Accomplishments.tex from resume_yaml accomplishments (title, detail, date) when present; use the template's LaTeX structure (\\skills{}, \\textit{}, date on the right).
@@ -100,6 +106,7 @@ def tailor_cv_with_gemini_cli(
     resume_max_pages: int,
     template_files: Mapping[str, str],
     experience_note_hints: list[dict[str, str]] | None = None,
+    cv_layout_constraints: CvLayoutConstraints | None = None,
     gemini_binary: str = "gemini",
     model: str = "flash",
     debug: bool = False,
@@ -118,6 +125,8 @@ def tailor_cv_with_gemini_cli(
     }
     if experience_note_hints:
         input_payload["experience_note_hints"] = experience_note_hints
+    if cv_layout_constraints is not None:
+        input_payload["cv_layout_constraints"] = cv_layout_constraints.as_dict()
     stdin_payload = "---CV-GENERATE-INPUT---\n" + json.dumps(input_payload, ensure_ascii=False)
     command = [
         gemini_binary,

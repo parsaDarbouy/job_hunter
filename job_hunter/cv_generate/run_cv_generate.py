@@ -18,6 +18,8 @@ from job_hunter.cv_generate.job_description import fetch_and_save_job_descriptio
 from job_hunter.cv_generate.latex_compile import compile_resume_pdf
 from job_hunter.cv_generate.template_copy import copy_cv_template
 from job_hunter.cv_generate.template_files import read_editable_template_files, write_tailored_files
+from job_hunter.cv_generate.layout_constraints import parse_cv_layout_constraints
+from job_hunter.cv_generate.validate_layout import validate_tailored_layout
 from job_hunter.cv_generate.validate_tailored import validate_employers_in_latex
 from job_hunter.paths import (
     cv_output_dir,
@@ -67,6 +69,7 @@ def run_cv_generate(
 
     resume_max_pages = parse_resume_max_pages(resume_document)
     target_job_url = parse_target_job_url(resume_document)
+    cv_layout = parse_cv_layout_constraints(resume_document)
     resume_yaml_text = resume_file.read_text(encoding="utf-8")
 
     _logger.info(
@@ -93,6 +96,7 @@ def run_cv_generate(
         resume_max_pages=resume_max_pages,
         template_files=template_files,
         experience_note_hints=experience_note_hints,
+        cv_layout_constraints=cv_layout,
         gemini_binary=gemini_binary,
         model=model,
         debug=debug,
@@ -100,6 +104,11 @@ def run_cv_generate(
     validate_employers_in_latex(
         resume_document=resume_document,
         files=tailor_result.files,
+    )
+    validate_tailored_layout(
+        files=tailor_result.files,
+        layout=cv_layout,
+        resume_max_pages=resume_max_pages,
     )
     write_tailored_files(working_dir, tailor_result.files)
 

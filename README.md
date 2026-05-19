@@ -129,7 +129,17 @@ Add at the **top** of `data/resume.yaml` (not set by `resume:ingest`):
 ```yaml
 resume_max_pages: 2
 target_job_url: "https://boards.greenhouse.io/example/jobs/123"
+cv_layout:
+  about_me_word_count:
+    min: 55
+    max: 75
+  experience_bullets_per_page: 8
+  experience_bullet_word_count:
+    min: 18
+    max: 32
 ```
+
+``cv_layout`` is manual (preserved across ``resume:ingest``). Gemini must follow these limits for the objective (about me) and experience bullets; Python validates word and bullet counts after tailoring.
 
 Run:
 

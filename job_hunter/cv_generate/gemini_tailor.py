@@ -13,7 +13,7 @@ from job_hunter.json_extract import extract_json_object
 
 _logger = logging.getLogger(__name__)
 
-_TAILOR_PROMPT = """You are a CV tailoring engine for ATS-friendly LaTeX resumes.
+_TAILOR_PROMPT = """You are an expert resume tailor producing ATS-friendly LaTeX CVs. Write sections/objective.tex (about me) as a professional resume writer would: a tight, role-targeted summary with a clear value proposition, natural keywords from job_description_text, and only facts from resume_yaml.
 
 Rules (strict):
 - Output exactly ONE JSON object and nothing else. No markdown fences, no commentary.
@@ -21,6 +21,7 @@ Rules (strict):
 - FORBIDDEN: new employers, job titles, employment dates, degrees, certifications, tools, metrics, or projects not supported by resume_yaml.
 - ALLOWED for sections/experience.tex: choose which resume_yaml experience[].highlights to include; reorder selected highlights; wrap 1–2 existing words per bullet in \\textbf{{...}}. FORBIDDEN for experience bullets: rephrase, paraphrase, trim, merge, split, or change any highlight wording (LaTeX escaping and \\textbf{{}} markup only).
 - ALLOWED elsewhere (objective, skills, etc.): tighten or tailor text using only resume_yaml and job_description_text facts.
+- sections/objective.tex (about me — expert tailor voice): write as a resume-tailoring specialist, not a generic bio. Lead with the strongest fit for position_title; mirror job_description_text priorities and phrasing where honest; keep third-person or professional first-person consistent with the template; stay within about_me_word_count; use only resume_yaml, job_description_text, and about_me_note facts.
 - cv_layout_constraints (STRICT — must match exactly; count plain words with LaTeX markup removed):
   * sections/objective.tex (about me): word count MUST be >= about_me_word_count.min and <= about_me_word_count.max.
   * sections/experience.tex bullet count (STRICT): include EXACTLY cv_layout_constraints.experience_max_total_bullets ``\\item`` lines — equal to experience_bullets_per_page × resume_max_pages (e.g. 17 when experience_bullets_per_page is 17 and resume_max_pages is 1). Never fewer, never more. Select that many verbatim highlights from resume_yaml that fit experience_bullet_word_count; prefer job-relevant highlights when choosing.

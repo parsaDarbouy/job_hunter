@@ -5,6 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+SKILLS_MAX_CATEGORIES = 5
+SKILLS_MAX_CHARACTERS_PER_SKILL = 40
+
 
 @dataclass(frozen=True)
 class CvLayoutConstraints:
@@ -31,6 +34,8 @@ class CvLayoutConstraints:
                 "min": self.experience_bullet_words_min,
                 "max": self.experience_bullet_words_max,
             },
+            "skills_max_categories": SKILLS_MAX_CATEGORIES,
+            "skills_max_characters_per_skill": SKILLS_MAX_CHARACTERS_PER_SKILL,
         }
 
 

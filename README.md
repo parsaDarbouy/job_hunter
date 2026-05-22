@@ -142,7 +142,7 @@ cv_layout:
 about_me_note: "Optional angle for the objective / about-me paragraph (preserved across resume:ingest)."
 ```
 
-``cv_layout`` and ``about_me_note`` are manual (preserved across ``resume:ingest``). Gemini must follow these limits for the objective (about me) and experience bullets; ``sections/experience.tex`` must contain **exactly** ``experience_bullets_per_page × resume_max_pages`` ``\\item`` lines (Python caps excess lines, then validation rejects if the count is too low or too high). Experience bullets are **verbatim** ``resume.yaml`` highlights (selection and reorder only—no rephrasing); each uses exactly 1–2 ``\\textbf{}`` keywords on words already in the highlight.
+``cv_layout`` and ``about_me_note`` are manual (preserved across ``resume:ingest``). Gemini must follow these limits for the objective (about me) and experience bullets; ``sections/experience.tex`` must contain **exactly** ``experience_bullets_per_page × resume_max_pages`` ``\\item`` lines (Python caps excess lines, then validation rejects if the count is too low or too high). Experience bullets are **verbatim** ``resume.yaml`` highlights (selection and reorder only—no rephrasing); each uses exactly 1–2 ``\\textbf{}`` keywords on words already in the highlight. ``sections/skills.tex`` is limited to **at most 5** skill categories and **at most 40 characters** per skill name (enforced in the Gemini prompt and by Python validation).
 
 Run:
 
@@ -152,6 +152,8 @@ python3 -m job_hunter cv:generate --resume ./data/resume.yaml --debug --model fl
 ```
 
 **Flow:** fetch job description → `data/cv/job_description.txt`; copy `data/cv_template/` → `data/.cv_template/` (working tree for AI edits); Gemini tailors section files; compile `resume.tex`; write `data/cv/{companyName}_{position}.pdf`.
+
+**Header role (`\def\role{...}` in `resume.tex`):** Gemini sets a short main role (e.g. SRE, DevOps Engineer, Cloud Engineer), not the full posting title—no seniority prefix and no team or specialty suffix (e.g. not “Senior Software Engineer - Engineering Workflow and CI”). The full `position_title` from the job ad is still used for the output PDF filename.
 
 **Stdout:** absolute path to the generated PDF.
 

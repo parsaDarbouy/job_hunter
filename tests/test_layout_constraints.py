@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from job_hunter.cv_generate.latex_text_metrics import (
@@ -10,6 +12,7 @@ from job_hunter.cv_generate.latex_text_metrics import (
     count_plain_words,
     count_textbf_spans,
     extract_zitemize_bullets,
+    parse_skills_table_categories,
 )
 from job_hunter.cv_generate.layout_constraints import CvLayoutConstraints, parse_cv_layout_constraints
 from job_hunter.cv_generate.validate_layout import validate_tailored_layout
@@ -151,6 +154,65 @@ def test_layout_as_dict_includes_max_total_bullets() -> None:
     )
     payload = layout.as_dict(resume_max_pages=1)
     assert payload["experience_max_total_bullets"] == 17
+    assert payload["skills_max_categories"] == 5
+    assert payload["skills_max_characters_per_skill"] == 40
+
+
+def test_parse_skills_table_categories_counts_template_rows() -> None:
+    skills_tex = (Path(__file__).resolve().parents[1] / "data/cv_template/sections/skills.tex").read_text(
+        encoding="utf-8",
+    )
+    categories = parse_skills_table_categories(skills_tex)
+    assert len(categories) == 5
+    for _, skills in categories:
+        assert skills
+        assert all(len(skill) <= 40 for skill in skills)
+
+
+def test_validate_tailored_layout_rejects_too_many_skill_categories() -> None:
+    layout = CvLayoutConstraints(
+        about_me_words_min=5,
+        about_me_words_max=50,
+        experience_bullets_per_page=1,
+        experience_bullet_words_min=5,
+        experience_bullet_words_max=30,
+    )
+    rows = "\n".join(
+        rf"\skills{{Category {index}}} & & {{ Skill A}}, {{ Skill B}} \\" for index in range(6)
+    )
+    files = {
+        "sections/objective.tex": "Short summary here today with enough words.",
+        "sections/experience.tex": (
+            r"\begin{zitemize}"
+            r"\item \textbf{Only} one bullet with enough words here today."
+            r"\end{zitemize}"
+        ),
+        "sections/skills.tex": rows,
+    }
+    with pytest.raises(ValueError, match="6 skill categories"):
+        validate_tailored_layout(files=files, layout=layout, resume_max_pages=1)
+
+
+def test_validate_tailored_layout_rejects_skill_exceeding_character_limit() -> None:
+    layout = CvLayoutConstraints(
+        about_me_words_min=5,
+        about_me_words_max=50,
+        experience_bullets_per_page=1,
+        experience_bullet_words_min=5,
+        experience_bullet_words_max=30,
+    )
+    long_skill = "A" * 41
+    files = {
+        "sections/objective.tex": "Short summary here today with enough words.",
+        "sections/experience.tex": (
+            r"\begin{zitemize}"
+            r"\item \textbf{Only} one bullet with enough words here today."
+            r"\end{zitemize}"
+        ),
+        "sections/skills.tex": rf"\skills{{Languages}} & & {{{long_skill}}} \\",
+    }
+    with pytest.raises(ValueError, match="41 characters"):
+        validate_tailored_layout(files=files, layout=layout, resume_max_pages=1)
 
 
 def test_count_textbf_spans() -> None:

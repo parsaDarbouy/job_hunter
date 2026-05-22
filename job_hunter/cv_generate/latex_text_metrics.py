@@ -51,6 +51,57 @@ def cap_latex_item_bullets(latex: str, max_items: int) -> str:
     return trimmed + "\n"
 
 
+def _strip_percent_comments(latex: str) -> str:
+    return re.sub(r"(?<!\\)%.*$", "", latex, flags=re.MULTILINE)
+
+
+_SKILLS_TABLE_ROW = re.compile(
+    r"\\skills\{([^}]*)\}\s*&\s*&\s*(.*?)\s*\\\\",
+    re.DOTALL,
+)
+
+
+def _split_comma_separated_skills(column: str) -> list[str]:
+    parts: list[str] = []
+    depth = 0
+    chunk: list[str] = []
+    for char in column:
+        if char == "{":
+            depth += 1
+            chunk.append(char)
+        elif char == "}":
+            depth = max(0, depth - 1)
+            chunk.append(char)
+        elif char == "," and depth == 0:
+            parts.append("".join(chunk).strip())
+            chunk = []
+        else:
+            chunk.append(char)
+    tail = "".join(chunk).strip()
+    if tail:
+        parts.append(tail)
+    skills: list[str] = []
+    for part in parts:
+        plain = strip_latex_to_plain_text(part).strip()
+        if plain:
+            skills.append(plain)
+    return skills
+
+
+def parse_skills_table_categories(latex: str) -> list[tuple[str, list[str]]]:
+    """
+    Return each skills-table row as ``(category_label, skill_names)``.
+
+    Matches ``\\skills{Category} & & skill1, skill2, ... \\\\`` rows in
+    ``sections/skills.tex`` (not ``\\skills{}`` used elsewhere).
+    """
+    cleaned = _strip_percent_comments(latex)
+    return [
+        (match.group(1).strip(), _split_comma_separated_skills(match.group(2)))
+        for match in _SKILLS_TABLE_ROW.finditer(cleaned)
+    ]
+
+
 def extract_zitemize_bullets(latex: str) -> list[str]:
     """Return inner text of each ``\\item`` inside ``zitemize`` environments."""
     bullets: list[str] = []

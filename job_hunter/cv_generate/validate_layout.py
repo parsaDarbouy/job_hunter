@@ -8,9 +8,14 @@ from job_hunter.cv_generate.latex_text_metrics import (
     count_plain_words,
     count_textbf_spans,
     extract_zitemize_bullets,
+    parse_skills_table_categories,
     strip_latex_to_plain_text,
 )
-from job_hunter.cv_generate.layout_constraints import CvLayoutConstraints
+from job_hunter.cv_generate.layout_constraints import (
+    SKILLS_MAX_CATEGORIES,
+    SKILLS_MAX_CHARACTERS_PER_SKILL,
+    CvLayoutConstraints,
+)
 
 
 def validate_tailored_layout(
@@ -64,6 +69,21 @@ def validate_tailored_layout(
                 f"{path} bullet must have 1–2 \\textbf{{}} keywords (found {bold_count}): "
                 f"{bullet[:80]}{'…' if len(bullet) > 80 else ''}"
             )
+
+    skills_tex = files.get("sections/skills.tex", "")
+    skill_categories = parse_skills_table_categories(skills_tex)
+    if len(skill_categories) > SKILLS_MAX_CATEGORIES:
+        violations.append(
+            f"sections/skills.tex has {len(skill_categories)} skill categories; "
+            f"maximum is {SKILLS_MAX_CATEGORIES}"
+        )
+    for category, skills in skill_categories:
+        for skill in skills:
+            if len(skill) > SKILLS_MAX_CHARACTERS_PER_SKILL:
+                violations.append(
+                    f"sections/skills.tex skill {skill!r} in category {category!r} has "
+                    f"{len(skill)} characters; maximum is {SKILLS_MAX_CHARACTERS_PER_SKILL}"
+                )
 
     if violations:
         joined = "; ".join(violations)

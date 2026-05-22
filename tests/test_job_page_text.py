@@ -6,10 +6,13 @@ import json
 from unittest.mock import patch
 
 from job_hunter.job_filtering.job_page_text import (
+    extract_html_meta_description,
     fetch_greenhouse_job_description,
     fetch_job_description,
+    fetch_workday_job_description,
     html_to_text,
     parse_greenhouse_job_reference,
+    parse_workday_job_reference,
 )
 
 
@@ -108,3 +111,115 @@ def test_fetch_job_description_falls_back_to_greenhouse_when_html_empty() -> Non
 def test_html_to_text_skips_script_content() -> None:
     text = html_to_text("<html><script>ignore()</script><p>Visible</p></html>")
     assert text == "Visible"
+
+
+def test_extract_html_meta_description_reads_open_graph() -> None:
+    document = (
+        '<html><head><meta property="og:description" content="Role summary with '
+        '&#39;entities&#39;." /></head><body></body></html>'
+    )
+    assert extract_html_meta_description(document) == "Role summary with 'entities'."
+
+
+def test_parse_workday_job_reference_from_career_url() -> None:
+    reference = parse_workday_job_reference(
+        "https://clio.wd3.myworkdayjobs.com/en-US/ClioCareerSite/job/"
+        "Remote---Canada/Systems-Engineer--Production_BF-REQ-3194?source=LinkedIn",
+    )
+    assert reference == (
+        "https://clio.wd3.myworkdayjobs.com",
+        "clio",
+        "ClioCareerSite",
+        "Remote---Canada/Systems-Engineer--Production_BF-REQ-3194",
+    )
+
+
+def test_parse_workday_job_reference_returns_none_for_other_hosts() -> None:
+    assert parse_workday_job_reference("https://boards.greenhouse.io/acme/jobs/1") is None
+
+
+def test_fetch_workday_job_description_via_cxs_api() -> None:
+    payload = {
+        "jobPostingInfo": {
+            "title": "Systems Engineer, Production",
+            "location": "Remote - Canada",
+            "jobDescription": "<p>Operate <strong>AWS</strong> infrastructure.</p>",
+        },
+    }
+
+    def fake_urlopen(request, timeout=30):
+        assert "/wday/cxs/clio/ClioCareerSite/job/" in request.full_url
+        return _FakeHttpResponse(
+            json.dumps(payload).encode("utf-8"),
+            content_type="application/json",
+        )
+
+    with patch("job_hunter.job_filtering.job_page_text.urllib.request.urlopen", fake_urlopen):
+        text = fetch_workday_job_description(
+            "https://clio.wd3.myworkdayjobs.com",
+            "clio",
+            "ClioCareerSite",
+            "Systems-Engineer--Production_BF-REQ-3194",
+        )
+
+    assert "Systems Engineer, Production" in text
+    assert "Remote - Canada" in text
+    assert "AWS" in text
+
+
+def test_fetch_job_description_uses_meta_when_body_empty() -> None:
+    html_body = (
+        b"<html><head><meta property=\"og:description\" content=\"Workday SPA summary\" />"
+        b"</head><body></body></html>"
+    )
+
+    def fake_urlopen(request, timeout=30):
+        return _FakeHttpResponse(html_body)
+
+    with patch("job_hunter.job_filtering.job_page_text.urllib.request.urlopen", fake_urlopen):
+        text = fetch_job_description(
+            "https://clio.wd3.myworkdayjobs.com/en-US/ClioCareerSite/job/example",
+        )
+
+    assert text == "Workday SPA summary"
+
+
+def test_fetch_job_description_prefers_visible_html_over_meta() -> None:
+    html_body = (
+        b"<html><head><meta property=\"og:description\" content=\"Meta only\" />"
+        b"</head><body><p>Visible body</p></body></html>"
+    )
+
+    def fake_urlopen(request, timeout=30):
+        return _FakeHttpResponse(html_body)
+
+    with patch("job_hunter.job_filtering.job_page_text.urllib.request.urlopen", fake_urlopen):
+        text = fetch_job_description("https://example.com/jobs/a")
+
+    assert text == "Visible body"
+
+
+def test_fetch_job_description_falls_back_to_workday_api_when_html_empty() -> None:
+    workday_payload = {
+        "jobPostingInfo": {
+            "title": "Platform Engineer",
+            "jobDescription": "<p>Workday API description</p>",
+        },
+    }
+
+    def fake_urlopen(request, timeout=30):
+        url = request.full_url
+        if "/wday/cxs/" in url:
+            return _FakeHttpResponse(
+                json.dumps(workday_payload).encode("utf-8"),
+                content_type="application/json",
+            )
+        return _FakeHttpResponse(b"<html><body></body></html>")
+
+    with patch("job_hunter.job_filtering.job_page_text.urllib.request.urlopen", fake_urlopen):
+        text = fetch_job_description(
+            "https://clio.wd3.myworkdayjobs.com/en-US/ClioCareerSite/job/Role_ID",
+        )
+
+    assert "Platform Engineer" in text
+    assert "Workday API description" in text

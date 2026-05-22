@@ -15,6 +15,10 @@ from typing import Any, Mapping
 _MAX_RESPONSE_BYTES = 2_000_000
 _SKIPPED_TAGS = {"script", "style", "noscript", "svg"}
 _GREENHOUSE_BOARD_HOSTS = frozenset({"boards.greenhouse.io", "job-boards.greenhouse.io"})
+_WORKDAY_JOBS_HOST_SUFFIX = ".myworkdayjobs.com"
+_META_DESCRIPTION_KEYS = frozenset(
+    {"description", "og:description", "twitter:description"},
+)
 _USER_AGENT = "job-hunter/0.1 (+https://github.com/google-gemini/gemini-cli)"
 
 
@@ -60,6 +64,40 @@ def html_to_text(html: str) -> str:
     parser.feed(html)
     parser.close()
     return parser.text()
+
+
+class _MetaDescriptionParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._best: str = ""
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() != "meta":
+            return
+        attribute_map = {
+            name.lower(): (value or "").strip()
+            for name, value in attrs
+            if name
+        }
+        content = attribute_map.get("content", "").strip()
+        if not content:
+            return
+        name = attribute_map.get("name", "").lower()
+        property_name = attribute_map.get("property", "").lower()
+        if name in _META_DESCRIPTION_KEYS or property_name in _META_DESCRIPTION_KEYS:
+            if len(content) > len(self._best):
+                self._best = content
+
+    def description(self) -> str:
+        return _normalize_text(html.unescape(self._best))
+
+
+def extract_html_meta_description(document_html: str) -> str:
+    """Return the longest job-related meta description from an HTML document."""
+    parser = _MetaDescriptionParser()
+    parser.feed(document_html)
+    parser.close()
+    return parser.description()
 
 
 def parse_greenhouse_job_reference(url: str) -> tuple[str, str] | None:
@@ -135,6 +173,102 @@ def _greenhouse_payload_to_text(payload: Mapping[str, Any]) -> str:
     return _normalize_text("\n\n".join(parts))
 
 
+def parse_workday_job_reference(url: str) -> tuple[str, str, str, str] | None:
+    """
+    Return ``(site_origin, tenant, career_site_slug, job_path)`` for Workday URLs.
+
+    Example::
+      https://clio.wd3.myworkdayjobs.com/en-US/ClioCareerSite/job/Remote---Canada/Role_ID
+    """
+    parsed = urllib.parse.urlparse(url.strip())
+    if not parsed.scheme or not parsed.netloc:
+        return None
+
+    host = parsed.netloc.lower()
+    if host.startswith("www."):
+        host = host[4:]
+    if not host.endswith(_WORKDAY_JOBS_HOST_SUFFIX):
+        return None
+
+    tenant = host.split(".", maxsplit=1)[0]
+    if not tenant:
+        return None
+
+    path_parts = [part for part in parsed.path.split("/") if part]
+    try:
+        job_index = path_parts.index("job")
+    except ValueError:
+        return None
+    if job_index < 1:
+        return None
+
+    job_path_parts = path_parts[job_index + 1 :]
+    if not job_path_parts:
+        return None
+
+    career_site_slug = path_parts[job_index - 1]
+    job_path = "/".join(job_path_parts)
+    site_origin = f"{parsed.scheme}://{parsed.netloc}"
+    return site_origin, tenant, career_site_slug, job_path
+
+
+def _workday_job_api_url(
+    site_origin: str,
+    tenant: str,
+    career_site_slug: str,
+    job_path: str,
+) -> str:
+    encoded_job_path = "/".join(
+        urllib.parse.quote(segment, safe="") for segment in job_path.split("/")
+    )
+    safe_tenant = urllib.parse.quote(tenant, safe="")
+    safe_site = urllib.parse.quote(career_site_slug, safe="")
+    return f"{site_origin.rstrip('/')}/wday/cxs/{safe_tenant}/{safe_site}/job/{encoded_job_path}"
+
+
+def _workday_payload_to_text(payload: Mapping[str, Any]) -> str:
+    job_posting = payload.get("jobPostingInfo")
+    if not isinstance(job_posting, Mapping):
+        return ""
+
+    parts: list[str] = []
+    title = str(job_posting.get("title") or "").strip()
+    if title:
+        parts.append(title)
+    location = str(job_posting.get("location") or "").strip()
+    if location:
+        parts.append(location)
+    job_description = str(job_posting.get("jobDescription") or "").strip()
+    if job_description:
+        parts.append(html_to_text(html.unescape(job_description)))
+    return _normalize_text("\n\n".join(parts))
+
+
+def fetch_workday_job_description(
+    site_origin: str,
+    tenant: str,
+    career_site_slug: str,
+    job_path: str,
+    *,
+    timeout_seconds: int = 30,
+) -> str:
+    """Fetch a Workday posting via the public ``/wday/cxs/`` JSON API."""
+    api_url = _workday_job_api_url(site_origin, tenant, career_site_slug, job_path)
+    request = urllib.request.Request(
+        api_url,
+        headers={"User-Agent": _USER_AGENT, "Accept": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+            payload = response.read(_MAX_RESPONSE_BYTES)
+    except urllib.error.HTTPError:
+        return ""
+    payload_data = json.loads(payload.decode("utf-8"))
+    if not isinstance(payload_data, dict):
+        return ""
+    return _workday_payload_to_text(payload_data)
+
+
 def fetch_greenhouse_job_description(
     board_token: str,
     job_id: str,
@@ -162,10 +296,16 @@ def _fetch_html_job_description(url: str, *, timeout_seconds: int) -> str:
         content_type = response.headers.get("content-type", "")
 
     charset = _charset_from_content_type(content_type)
-    text = payload.decode(charset, errors="replace")
-    if "html" in content_type.lower() or "<html" in text[:500].lower():
-        return html_to_text(text)
-    return _normalize_text(text)
+    decoded = payload.decode(charset, errors="replace")
+    if "html" in content_type.lower() or "<html" in decoded[:500].lower():
+        visible_text = html_to_text(decoded)
+        if visible_text:
+            return visible_text
+        meta_description = extract_html_meta_description(decoded)
+        if meta_description:
+            return meta_description
+        return ""
+    return _normalize_text(decoded)
 
 
 def fetch_job_description(url: str, *, timeout_seconds: int = 30) -> str:
@@ -179,11 +319,24 @@ def fetch_job_description(url: str, *, timeout_seconds: int = 30) -> str:
         return description
 
     reference = parse_greenhouse_job_reference(cleaned_url)
-    if reference is None:
+    if reference is not None:
+        board_token, job_id = reference
+        greenhouse_description = fetch_greenhouse_job_description(
+            board_token,
+            job_id,
+            timeout_seconds=timeout_seconds,
+        )
+        if greenhouse_description:
+            return greenhouse_description
+
+    workday_reference = parse_workday_job_reference(cleaned_url)
+    if workday_reference is None:
         return ""
-    board_token, job_id = reference
-    return fetch_greenhouse_job_description(
-        board_token,
-        job_id,
+    site_origin, tenant, career_site_slug, job_path = workday_reference
+    return fetch_workday_job_description(
+        site_origin,
+        tenant,
+        career_site_slug,
+        job_path,
         timeout_seconds=timeout_seconds,
     )

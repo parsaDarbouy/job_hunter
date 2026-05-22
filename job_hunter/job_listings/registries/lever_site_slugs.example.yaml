@@ -1,0 +1,5 @@
+# Lever careers site slugs (public JSON at api.lever.co/v0/postings/{slug}?mode=json).
+# Some employers also have a Workable apply subdomain with an empty widget API; list them here instead.
+
+site_slugs:
+  - metabase

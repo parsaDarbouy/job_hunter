@@ -8,6 +8,7 @@ from typing import Any, Mapping
 from job_hunter.job_listings.board_urls import (
     ashby_job_board_url,
     greenhouse_jobs_url,
+    lever_postings_url,
     workable_apply_jobs_url,
 )
 
@@ -113,6 +114,22 @@ def _fetch_task_for_source(source: Mapping[str, Any]) -> dict[str, Any]:
         return {
             "task_id": str(source_id),
             "kind": "workable",
+            "enabled": True,
+            "request": {"method": "GET", "url": url},
+            "parameters": parameters,
+        }
+    if kind == "lever":
+        slug = source.get("site_slug")
+        if not slug:
+            raise ValueError(f"lever source {source_id!r} requires 'site_slug'")
+        url = lever_postings_url(str(slug))
+        parameters = {"site_slug": str(slug)}
+        parent = source.get("expansion_parent_id")
+        if isinstance(parent, str) and parent.strip():
+            parameters["expansion_parent_id"] = parent.strip()
+        return {
+            "task_id": str(source_id),
+            "kind": "lever",
             "enabled": True,
             "request": {"method": "GET", "url": url},
             "parameters": parameters,

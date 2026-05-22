@@ -17,6 +17,12 @@ def ashby_job_board_url(organization_slug: str) -> str:
     return f"https://api.ashbyhq.com/posting-api/job-board/{safe}?includeCompensation=true"
 
 
+def lever_postings_url(site_slug: str) -> str:
+    """Lever public postings JSON for a careers site slug (``jobs.lever.co/{slug}``)."""
+    safe = quote(str(site_slug), safe="")
+    return f"https://api.lever.co/v0/postings/{safe}?mode=json"
+
+
 def workable_apply_jobs_url(apply_account_slug: str) -> str:
     """
     Workable public widget JSON for an account slug (path under ``apply.workable.com/{slug}/``).

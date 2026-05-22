@@ -1,0 +1,4 @@
+# Lever site slugs for employers in the globally_remote pack that list on Lever, not Workable widget API.
+
+site_slugs:
+  - metabase

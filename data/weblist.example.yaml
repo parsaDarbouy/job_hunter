@@ -17,6 +17,10 @@ sources:
     kind: workable
     apply_account_slugs_registry: package:workable_apply_slugs.example.yaml
 
+  - id: lever_pack
+    kind: lever
+    site_slugs_registry: package:lever_site_slugs.example.yaml
+
   - id: custom_career_pack
     kind: custom_career_page
     careers_pages_registry: package:career_pages.example.yaml
@@ -68,6 +72,10 @@ sources:
   - id: workable_globally_remote
     kind: workable
     apply_account_slugs_registry: package:workable_apply_slugs.globally_remote.yaml
+
+  - id: lever_globally_remote
+    kind: lever
+    site_slugs_registry: package:lever_site_slugs.globally_remote.yaml
 
   - id: custom_career_globally_remote
     kind: custom_career_page

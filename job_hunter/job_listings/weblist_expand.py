@@ -108,6 +108,29 @@ def _merge_ashby_slugs(source: Mapping[str, Any], *, weblist_parent: Path) -> li
     return _dedupe_preserve_order(slugs)
 
 
+def _merge_lever_site_slugs(source: Mapping[str, Any], *, weblist_parent: Path) -> list[str]:
+    slugs: list[str] = []
+    single = source.get("site_slug")
+    if isinstance(single, str) and single.strip():
+        slugs.append(single.strip())
+    many = source.get("site_slugs")
+    if many is not None:
+        if not isinstance(many, list):
+            raise ValueError("site_slugs must be a list of strings when present")
+        slugs.extend(str(item).strip() for item in many if str(item).strip())
+    registry_ref = source.get("site_slugs_registry")
+    if registry_ref is not None:
+        if not isinstance(registry_ref, str) or not registry_ref.strip():
+            raise ValueError("site_slugs_registry must be a non-empty string when present")
+        registry_path = _resolve_registry_reference(registry_ref, weblist_parent=weblist_parent)
+        document = _load_yaml_mapping(registry_path)
+        from_file = document.get("site_slugs")
+        if not isinstance(from_file, list):
+            raise ValueError(f"Registry {registry_path} must define site_slugs: as a list")
+        slugs.extend(str(item).strip() for item in from_file if str(item).strip())
+    return _dedupe_preserve_order(slugs)
+
+
 def _merge_workable_slugs(source: Mapping[str, Any], *, weblist_parent: Path) -> list[str]:
     slugs: list[str] = []
     single = source.get("apply_account_slug")
@@ -264,6 +287,25 @@ def expand_weblist_sources(sources: list[dict[str, Any]], *, weblist_path: Path)
                     "id": child_id,
                     "kind": "workable",
                     "apply_account_slug": slug,
+                    "enabled": True,
+                }
+                if len(slugs) > 1:
+                    row["expansion_parent_id"] = parent_id
+                expanded.append(row)
+            continue
+        if kind == "lever":
+            slugs = _merge_lever_site_slugs(source, weblist_parent=weblist_parent)
+            if not slugs:
+                raise ValueError(
+                    f"lever source {parent_id!r} needs at least one of: "
+                    "site_slug, site_slugs, site_slugs_registry",
+                )
+            for slug in slugs:
+                child_id = parent_id if len(slugs) == 1 else _child_id(parent_id, slug)
+                row = {
+                    "id": child_id,
+                    "kind": "lever",
+                    "site_slug": slug,
                     "enabled": True,
                 }
                 if len(slugs) > 1:

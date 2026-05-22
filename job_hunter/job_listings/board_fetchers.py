@@ -56,6 +56,8 @@ def fetch_jobs_for_source(source: Mapping[str, Any]) -> tuple[list[JobPosting], 
         return _fetch_ashby(source, source_id)
     if kind == "workable":
         return _fetch_workable(source, source_id)
+    if kind == "lever":
+        return _fetch_lever(source, source_id)
     return [], f"skip unknown provider kind {kind!r} for source {source_id!r}"
 
 
@@ -190,6 +192,73 @@ def _location_from_workable_job(job: Mapping[str, Any]) -> str:
     if parts:
         return ", ".join(parts)
     return remote_bits[0] if remote_bits else ""
+
+
+def _listing_posted_date_from_lever_created_at(value: Any) -> str:
+    """Convert Lever ``createdAt`` (Unix milliseconds) to ``YYYY-MM-DD``."""
+    if value is None:
+        return ""
+    try:
+        numeric = int(value)
+    except (TypeError, ValueError):
+        return _listing_posted_date_iso(value)
+    if numeric <= 0:
+        return ""
+    seconds = numeric / 1000 if numeric > 1_000_000_000_000 else numeric
+    return datetime.datetime.fromtimestamp(seconds, tz=datetime.timezone.utc).date().isoformat()
+
+
+def _location_from_lever_job(job: Mapping[str, Any]) -> str:
+    categories = job.get("categories")
+    if not isinstance(categories, dict):
+        return ""
+    location = str(categories.get("location") or "").strip()
+    if location:
+        return location
+    all_locations = categories.get("allLocations")
+    if isinstance(all_locations, list):
+        parts = [str(item).strip() for item in all_locations if str(item).strip()]
+        if parts:
+            return ", ".join(parts)
+    return ""
+
+
+def _fetch_lever(source: Mapping[str, Any], source_id: str) -> tuple[list[JobPosting], str | None]:
+    from job_hunter.job_listings.board_urls import lever_postings_url
+
+    slug = source.get("site_slug")
+    if not slug:
+        return [], f"lever source {source_id!r} missing site_slug"
+    slug_str = str(slug).strip()
+    company_label = humanize_board_identifier(slug_str)
+    url = lever_postings_url(slug_str)
+    payload, error_message = get_json_optional(url)
+    if error_message:
+        return [], error_message
+    if not isinstance(payload, list):
+        return [], f"lever response must be a JSON list for {source_id!r}"
+    postings: list[JobPosting] = []
+    for job in payload:
+        if not isinstance(job, dict):
+            continue
+        title = str(job.get("text") or "").strip()
+        link = str(job.get("hostedUrl") or job.get("applyUrl") or "").strip()
+        location_text = _location_from_lever_job(job)
+        if not title or not link:
+            continue
+        listed = _listing_posted_date_from_lever_created_at(job.get("createdAt"))
+        postings.append(
+            JobPosting(
+                url=link,
+                title=title,
+                location=location_text,
+                source_id=source_id,
+                provider_kind="lever",
+                company_name=company_label,
+                listing_posted_date=listed,
+            )
+        )
+    return postings, None if postings else "lever response contained no parseable job rows"
 
 
 def _fetch_workable(source: Mapping[str, Any], source_id: str) -> tuple[list[JobPosting], str | None]:

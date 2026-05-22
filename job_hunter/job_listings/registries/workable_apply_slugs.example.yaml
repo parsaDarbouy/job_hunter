@@ -28,7 +28,6 @@ apply_account_slugs:
   - gloat
   - mailerlite
   - maze
-  - metabase
   - paymentology
   - personio
   - teachable

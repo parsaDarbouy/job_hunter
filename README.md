@@ -1,5 +1,7 @@
 # Job Hunter
 
+**New here?** See **[usermanual.md](usermanual.md)** for a simple guide to every command and option.
+
 Agentic job-hunting utilities. **Resume ingestion** turns a PDF resume into a normalized `resume.yaml`. **Listing export** reads `weblist.yaml` (job board sources) plus `position.yaml` (your filters), writes a machine-readable `query.yaml` plan (fetch URLs and title-matching matrix), pulls public listings where supported, filters rows against your position criteria, and merges matches into `jobs_export.csv` (new URLs only when the file already exists). **AI job filtering** uses Gemini CLI to review jobs added on a specific date against `resume.yaml` and `position.yaml`, then writes a filtered CSV. **CV generation** tailors a LaTeX resume from `resume.yaml` and a job posting URL, then compiles an ATS-friendly PDF.
 
 Copy `data/position.example.yaml` → `data/position.yaml` and `data/weblist.example.yaml` → `data/weblist.yaml`, then edit boards, titles, and geography to match your search.

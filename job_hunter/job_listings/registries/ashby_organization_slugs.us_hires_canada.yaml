@@ -1,0 +1,36 @@
+# US-headquartered tech employers with Canada-friendly hiring on Ashby (``api.ashbyhq.com``).
+# Includes employers with Vancouver/Toronto offices or Canada remote locations in public postings.
+# ``gumloop`` and ``reacher`` are included for documented Canada hiring even when current postings are US-only.
+# Each company appears in at most one ``*.us_hires_canada.yaml`` registry file.
+
+organization_slugs:
+  - cohere
+  - workos
+  - hopper
+  - docker
+  - zip
+  - snowflake
+  - deel
+  - harvey
+  - confluent
+  - kong
+  - klue
+  - sentry
+  - sanity
+  - vanta
+  - legora
+  - decagon
+  - nylas
+  - ramp
+  - sierra
+  - airbyte
+  - andela
+  - camunda
+  - commonroom
+  - langchain
+  - paddle
+  - gumloop
+  - imprint
+  - incident
+  - merge
+  - reacher

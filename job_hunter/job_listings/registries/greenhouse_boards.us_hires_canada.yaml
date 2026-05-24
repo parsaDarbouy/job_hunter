@@ -1,0 +1,58 @@
+# US-headquartered and global tech employers that hire from Canada (remote, hybrid, or Vancouver/Toronto).
+# Board tokens verified via Greenhouse public jobs JSON (``boards-api.greenhouse.io``); many rows
+# were selected because active postings mention Canada, Vancouver, Toronto, or remote-Canada.
+# Each company appears in at most one ``*.us_hires_canada.yaml`` registry file.
+
+board_tokens:
+  - hellofresh
+  - stackadapt
+  - affirm
+  - okta
+  - stripe
+  - instacart
+  - mercury
+  - lyft
+  - gitlab
+  - brex
+  - mongodb
+  - zoominfo
+  - asana
+  - robinhood
+  - hootsuite
+  - block
+  - dropbox
+  - databricks
+  - dialpad
+  - opentable
+  - mozilla
+  - toast
+  - clickhouse
+  - elastic
+  - gusto
+  - twilio
+  - greenhouse
+  - reddit
+  - pinterest
+  - doitintl
+  - later
+  - remotecom
+  - chainguard
+  - pagerduty
+  - consensys
+  - lattice
+  - postman
+  - roofr
+  - thetradedesk
+  - yotpo
+  - apolloio
+  - gleanwork
+  - justworks
+  - sezzle
+  - adyen
+  - canonical
+  - datadog
+  - hightouch
+  - honeycomb
+  - pantherlabs
+  - platformsh
+  - polyai

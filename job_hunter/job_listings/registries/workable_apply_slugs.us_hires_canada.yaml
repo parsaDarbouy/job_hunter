@@ -1,0 +1,10 @@
+# Workable apply slugs for distributed employers (widget API).
+# Each company appears in at most one ``*.us_hires_canada.yaml`` registry file.
+
+apply_account_slugs:
+  - bamboohr
+  - hibob
+  - clevertech
+  - crossover
+  - glint
+  - gusto

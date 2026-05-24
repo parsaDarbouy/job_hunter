@@ -1,0 +1,11 @@
+# Lever site slugs for employers in the us_hires_canada pack (Canada/Vancouver/remote-Canada listings).
+# Each company appears in at most one ``*.us_hires_canada.yaml`` registry file.
+
+site_slugs:
+  - veeva
+  - spotify
+  - toptal
+  - mistral
+  - nium
+  - secureframe
+  - 15five

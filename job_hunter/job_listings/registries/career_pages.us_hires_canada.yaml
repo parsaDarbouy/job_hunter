@@ -1,0 +1,14 @@
+# Careers pages for tracking (Workday, etc.) without a bundled HTML scrape yet.
+# Complements API-backed ``*.us_hires_canada.yaml`` rows without duplicating those ATS entries.
+
+careers_pages:
+  - url: https://clio.wd3.myworkdayjobs.com/ClioCareerSite
+    display_name: Clio Careers
+  - url: https://www.shopify.com/careers
+    display_name: Shopify Careers
+  - url: https://jobs.lever.co/copperleaf
+    display_name: Copperleaf Careers
+  - url: https://www.waveapps.com/careers
+    display_name: Wave Careers
+  - url: https://www.bench.co/careers
+    display_name: Bench Careers

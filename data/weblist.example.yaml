@@ -81,6 +81,27 @@ sources:
     kind: custom_career_page
     careers_pages_registry: package:career_pages.globally_remote.yaml
 
+  # US-headquartered employers that hire from Canada / Vancouver (``*.us_hires_canada.yaml``).
+  - id: greenhouse_us_hires_canada
+    kind: greenhouse
+    board_tokens_registry: package:greenhouse_boards.us_hires_canada.yaml
+
+  - id: ashby_us_hires_canada
+    kind: ashby
+    organization_slugs_registry: package:ashby_organization_slugs.us_hires_canada.yaml
+
+  - id: workable_us_hires_canada
+    kind: workable
+    apply_account_slugs_registry: package:workable_apply_slugs.us_hires_canada.yaml
+
+  - id: lever_us_hires_canada
+    kind: lever
+    site_slugs_registry: package:lever_site_slugs.us_hires_canada.yaml
+
+  - id: custom_career_us_hires_canada
+    kind: custom_career_page
+    careers_pages_registry: package:career_pages.us_hires_canada.yaml
+
   # Inline extras (merged with their own ids if you prefer single-board rows):
   # - id: greenhouse_extra
   #   kind: greenhouse

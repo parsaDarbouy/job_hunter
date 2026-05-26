@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Mapping
+from typing import Any, Mapping, TextIO
 
 import yaml
 
@@ -35,6 +35,22 @@ def _write_query_yaml(document: Mapping[str, Any], output_path: Path) -> None:
     output_path.write_text(rendered, encoding="utf-8")
 
 
+def _format_progress_line(
+    *,
+    current: int,
+    total: int,
+    fetched: int,
+    matched: int,
+    bar_width: int = 24,
+) -> str:
+    if total <= 0:
+        filled = 0
+    else:
+        filled = min(bar_width, int(bar_width * current / total))
+    bar = "#" * filled + "-" * (bar_width - filled)
+    return f"[{bar}] {current}/{total} sources | {fetched} fetched | {matched} matched"
+
+
 def run_listings_export(
     *,
     weblist_path: Path | None = None,
@@ -42,12 +58,18 @@ def run_listings_export(
     query_output_path: Path | None = None,
     csv_output_path: Path | None = None,
     debug: bool = False,
+    enable_progress: bool = True,
+    progress_stream: TextIO | None = None,
 ) -> Path:
     """
     Build ``query.yaml``, fetch listings, filter by ``position.yaml``, merge into ``jobs_export.csv``.
 
+    When ``enable_progress`` is True, a single-line progress indicator is written to
+    ``progress_stream`` (default stderr), cleared with a newline when fetching finishes.
+
     Returns the absolute path to the CSV file.
     """
+    stream = progress_stream if progress_stream is not None else sys.stderr
     resolved_weblist = resolve_weblist_path(weblist_path)
     resolved_position = resolve_position_path(position_path)
     query_out = (query_output_path or default_query_output_path()).expanduser().resolve()
@@ -66,14 +88,37 @@ def run_listings_export(
     )
     _write_query_yaml(plan, query_out)
 
+    fetch_sources = [source for source in sources if source.get("enabled") is not False]
+    total_sources = len(fetch_sources)
+
+    def _write_progress(*, processed: int, fetched: int, matched: int) -> None:
+        if not enable_progress:
+            return
+        line = (
+            "listings:export "
+            f"{_format_progress_line(current=processed, total=total_sources, fetched=fetched, matched=matched)}"
+        )
+        stream.write(f"\r{line}")
+        stream.flush()
+
     aggregated: list[JobPosting] = []
-    for source in sources:
-        if source.get("enabled") is False:
-            continue
+    matched_count = 0
+    if enable_progress and total_sources > 0:
+        _write_progress(processed=0, fetched=0, matched=0)
+
+    for index, source in enumerate(fetch_sources, start=1):
         postings, warning = fetch_jobs_for_source(source)
         if debug and warning:
             print(f"[debug] source={source.get('id')!r}: {warning}", file=sys.stderr)
         aggregated.extend(postings)
+        matched_count += sum(
+            1 for posting in postings if posting_matches_position(posting, position_document)
+        )
+        _write_progress(processed=index, fetched=len(aggregated), matched=matched_count)
+
+    if enable_progress and total_sources > 0:
+        stream.write("\n")
+        stream.flush()
 
     matched = [posting for posting in aggregated if posting_matches_position(posting, position_document)]
     deduped = dedupe_job_postings_by_url(matched)

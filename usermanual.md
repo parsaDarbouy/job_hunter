@@ -101,6 +101,7 @@ job-hunter listings:export
 - Jobs already in the CSV (same URL) are skipped, not updated.
 - New rows get today’s date in `added_to_list_date`.
 - Job descriptions stay empty until `jobs:filter` fills them for the date you process.
+- While boards are fetched, stderr shows a progress bar: sources done, postings fetched, and matches so far.
 
 ---
 

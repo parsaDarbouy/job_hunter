@@ -70,7 +70,7 @@ python3 -m job_hunter listings:export --query-output ./data/query.yaml --csv-out
 
 After `pip install -e .`, you can also run `job-hunter listings:export`.
 
-**Defaults:** `--weblist` prefers `./data/weblist.yaml` when it exists, otherwise `./data/weblist.example.yaml`. `--position` prefers `./data/position.yaml`, otherwise `./data/position.example.yaml`. **Stdout** prints the absolute path to the CSV (same pattern as `resume:ingest` printing the YAML path).
+**Defaults:** `--weblist` prefers `./data/weblist.yaml` when it exists, otherwise `./data/weblist.example.yaml`. `--position` prefers `./data/position.yaml`, otherwise `./data/position.example.yaml`. **Stdout** prints the absolute path to the CSV (same pattern as `resume:ingest` printing the YAML path). **Stderr:** while boards are fetched, a single-line ASCII progress bar shows `sources processed/total`, cumulative postings fetched, and how many rows matched your position filters so far.
 
 **`query.yaml`:** metadata (input paths, timestamp, `csv_output_path`), `criteria_snapshot` (titles, geography, comp notes copied from `position.yaml`), `fetch_tasks` (one HTTP GET per concrete board after expansion, plus `enabled` / `request: null` when a source is turned off), and `title_query_matrix` (each expanded source × each acceptable title; custom career URLs use a manual-review strategy string).
 

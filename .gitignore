@@ -47,6 +47,7 @@ data/*
 !data/.gitkeep
 !data/position.example.yaml
 !data/weblist.example.yaml
+!data/resume.example.yaml
 !data/cv_template/
 !data/cv_template/**
 

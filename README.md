@@ -126,6 +126,8 @@ python3 -m job_hunter jobs:filter \
 
 Produce a tailored, ATS-friendly PDF resume from **`resume.yaml`** and the job posting at **`target_job_url`**. Gemini CLI rewrites the LaTeX template (example profile in git; your real data comes from YAML at generation time). Python validates that employers in the tailored text exist in `resume.yaml`, then runs `pdflatex`.
 
+**`data/resume.example.yaml`** documents the resume schema (short comments per field). You need a filled-in **`data/resume.yaml`**—from `resume:ingest` or by copying the example—to run `cv:generate` for a specific job posting (`target_job_url`).
+
 Add at the **top** of `data/resume.yaml` (not set by `resume:ingest`):
 
 ```yaml

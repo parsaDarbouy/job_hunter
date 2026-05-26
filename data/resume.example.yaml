@@ -1,0 +1,67 @@
+# Copy to resume.yaml (or pass -o on resume:ingest). Used by jobs:filter and cv:generate.
+
+resume_max_pages: 1  # Max pages for tailored CV PDF
+target_job_url: ""  # Job posting URL for cv:generate
+cv_layout:
+  about_me_word_count:
+    min: 55  # Min words in objective / about-me
+    max: 70  # Max words in objective / about-me
+  experience_bullets_per_page: 8  # Bullet count budget per page
+  experience_bullet_word_count:
+    min: 18  # Min words per experience bullet
+    max: 32  # Max words per experience bullet
+about_me_note: ""  # Optional angle for objective.tex (preserved on re-ingest)
+
+profile:
+  name: Your Name  # Full name
+  email: you@example.com  # Contact email
+  phone: ""  # Phone number
+  location: City, Region  # City or metro for CV header
+  links:
+    github: your-github-handle  # GitHub username (no URL)
+    linkedin: your-linkedin-slug  # LinkedIn profile slug (no URL)
+
+summary:
+  total_years_experience: 3  # Years of professional experience (number or +N)
+  domains:  # High-level focus areas (lowercase tags)
+  - backend
+  - devops
+
+skills:
+  languages: []  # Programming languages
+  frameworks: []  # Frameworks and libraries
+  cloud: []  # Cloud platforms and services
+  tools: []  # DevOps, CI/CD, observability, etc.
+  other: []  # Soft skills, practices, databases, OS
+
+experience:
+- company: Company Name  # Employer
+  title: Job Title  # Role at this employer
+  start_date: 2024-01  # YYYY-MM
+  end_date: Present  # YYYY-MM or Present
+  duration_months: 0  # Filled by resume:ingest when dates parse
+  highlights:  # Verbatim bullets for cv:generate (selection only)
+  - One achievement or responsibility from your resume.
+  note: ""  # Optional context for Gemini when picking bullets
+- company: Previous Company
+  title: Previous Title
+  start_date: 2022-01
+  end_date: 2023-12
+  duration_months: 0
+  highlights: []
+
+education:
+- institution: University Name  # School
+  degree: Bachelor of Science  # Degree name
+  field: Computer Science  # Major or field of study
+  start_date: 2018-09  # YYYY-MM
+  end_date: 2022-06  # YYYY-MM
+
+accomplishments:
+- title: Certification or Award  # Short label
+  detail: Issuer or one-line description  # Supporting detail
+  date: "2024"  # Year or date string
+
+metadata:
+  parsed_by: gemini-cli-agent  # Set by resume:ingest
+  source_file: /path/to/resume.pdf  # Source PDF path from last ingest

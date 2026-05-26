@@ -27,12 +27,16 @@ summary:
   - backend
   - devops
 
-skills:
-  languages: []  # Programming languages
-  frameworks: []  # Frameworks and libraries
-  cloud: []  # Cloud platforms and services
-  tools: []  # DevOps, CI/CD, observability, etc.
-  other: []  # Soft skills, practices, databases, OS
+skills:  # Any category names; cv:generate regroups into ≤5 PDF rows
+  category_1:  # List skills as - lines (below) or inline: [Python, Bash]
+  - Python
+  - Bash
+  category_2:
+  - AWS
+  - Kubernetes
+  category_3: []
+  category_4: []
+  category_5: []
 
 experience:
 - company: Company Name  # Employer

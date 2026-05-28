@@ -58,6 +58,16 @@ JSON shape:
 
 The input JSON follows on stdin after a single line containing only: ---CV-GENERATE-INPUT---"""
 
+_LAYOUT_REVISION_SUFFIX = """
+
+REVISION REQUIRED (previous output violated cv_layout_constraints):
+- Regenerate the full JSON with the same rules, but fix every violation listed below.
+- Make content shorter where limits were exceeded: abbreviate comma-separated skill names in sections/skills.tex, shorten sections/objective.tex if over the word max, pick different verbatim highlights when experience bullets are too long, and keep category count within skills_max_categories.
+- Do not invent employers, tools, or metrics.
+
+Violations from validation:
+{message}"""
+
 
 @dataclass(frozen=True)
 class GeminiCvTailorResult:
@@ -90,6 +100,7 @@ def tailor_cv_with_gemini_cli(
     experience_note_hints: list[dict[str, str]] | None = None,
     about_me_note: str = "",
     cv_layout_constraints: CvLayoutConstraints | None = None,
+    layout_revision_message: str | None = None,
     gemini_binary: str = "gemini",
     model: str = "flash",
     debug: bool = False,
@@ -114,11 +125,17 @@ def tailor_cv_with_gemini_cli(
         input_payload["cv_layout_constraints"] = cv_layout_constraints.as_dict(
             resume_max_pages=resume_max_pages,
         )
+    revision_text = (layout_revision_message or "").strip()
+    if revision_text:
+        input_payload["layout_revision_message"] = revision_text
+    prompt = _TAILOR_PROMPT
+    if revision_text:
+        prompt = prompt + _LAYOUT_REVISION_SUFFIX.format(message=revision_text)
     stdin_payload = "---CV-GENERATE-INPUT---\n" + json.dumps(input_payload, ensure_ascii=False)
     command = [
         gemini_binary,
         "-p",
-        _TAILOR_PROMPT,
+        prompt,
         "--output-format",
         "json",
         "-m",

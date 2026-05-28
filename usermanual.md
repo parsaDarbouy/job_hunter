@@ -144,6 +144,8 @@ target_job_url: "https://…"
 
 Optional: `cv_layout`, `about_me_note` — see README or the example in README’s `cv:generate` section.
 
+If tailored LaTeX breaks `cv_layout` limits (skill name length, word counts, bullet counts), the tool re-asks Gemini up to three times with the violation list and asks for shorter wording before failing.
+
 ```bash
 job-hunter cv:generate
 ```

@@ -15,7 +15,11 @@ from job_hunter.cv_generate.latex_text_metrics import (
     parse_skills_table_categories,
 )
 from job_hunter.cv_generate.layout_constraints import CvLayoutConstraints, parse_cv_layout_constraints
-from job_hunter.cv_generate.validate_layout import validate_tailored_layout
+from job_hunter.cv_generate.validate_layout import (
+    collect_layout_violations,
+    layout_violation_parts,
+    validate_tailored_layout,
+)
 
 
 def test_parse_cv_layout_constraints() -> None:
@@ -191,6 +195,30 @@ def test_validate_tailored_layout_rejects_too_many_skill_categories() -> None:
     }
     with pytest.raises(ValueError, match="6 skill categories"):
         validate_tailored_layout(files=files, layout=layout, resume_max_pages=1)
+
+
+def test_layout_violation_parts_lists_unique_sections() -> None:
+    layout = CvLayoutConstraints(
+        about_me_words_min=5,
+        about_me_words_max=50,
+        experience_bullets_per_page=1,
+        experience_bullet_words_min=5,
+        experience_bullet_words_max=30,
+    )
+    long_skill = "A" * 41
+    files = {
+        "sections/objective.tex": "Short summary here today with enough words.",
+        "sections/experience.tex": (
+            r"\begin{zitemize}"
+            r"\item \textbf{Only} one bullet with enough words here today."
+            r"\end{zitemize}"
+        ),
+        "sections/skills.tex": rf"\skills{{Languages}} & & {{{long_skill}}} \\",
+    }
+    violations = collect_layout_violations(files=files, layout=layout, resume_max_pages=1)
+    parts = layout_violation_parts(violations)
+    assert len(parts) == 1
+    assert "skills" in parts[0]
 
 
 def test_validate_tailored_layout_rejects_skill_exceeding_character_limit() -> None:

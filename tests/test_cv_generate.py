@@ -5,12 +5,16 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
+import logging
+
 import pytest
 import yaml
 
 from job_hunter.cv_generate.filename import build_cv_pdf_filename, slugify_filename_part
 from job_hunter.cv_generate.gemini_tailor import GeminiCvTailorResult
 from job_hunter.cv_generate.run_cv_generate import run_cv_generate
+from job_hunter.cv_generate.validate_layout import validate_tailored_layout
+from job_hunter.cv_generate.layout_constraints import parse_cv_layout_constraints
 from job_hunter.cv_generate.template_copy import copy_cv_template
 from job_hunter.cv_generate.template_files import write_tailored_files
 from job_hunter.cv_generate.validate_tailored import validate_employers_in_latex
@@ -280,3 +284,208 @@ def test_run_cv_generate_end_to_end_mocked(tmp_path: Path) -> None:
     assert pdf_path.name == "Acme_Corp_Site_Reliability_Engineer.pdf"
     assert pdf_path.is_file()
     assert description_path.read_text(encoding="utf-8") == "Build reliable systems."
+
+
+def test_run_cv_generate_retries_tailor_on_layout_violation(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    template_dir = tmp_path / "cv_template"
+    template_dir.mkdir()
+    (template_dir / "resume.tex").write_text("\\documentclass{article}", encoding="utf-8")
+    sections = template_dir / "sections"
+    sections.mkdir()
+    for name in (
+        "objective.tex",
+        "skills.tex",
+        "experience.tex",
+        "education.tex",
+        "previous.tex",
+        "Accomplishments.tex",
+    ):
+        (sections / name).write_text("% section", encoding="utf-8")
+
+    resume_path = tmp_path / "resume.yaml"
+    resume_document = {
+        "resume_max_pages": 1,
+        "target_job_url": "https://example.com/jobs/99",
+        "cv_layout": {
+            "about_me_word_count": {"min": 5, "max": 100},
+            "experience_bullets_per_page": 1,
+            "experience_bullet_word_count": {"min": 3, "max": 50},
+        },
+        "profile": {"name": "Alex", "email": "a@example.com", "links": {}},
+        "summary": {},
+        "skills": {},
+        "experience": [{"company": "Northwind Systems", "title": "SRE"}],
+        "education": [],
+    }
+    resume_path.write_text(yaml.safe_dump(resume_document, sort_keys=False), encoding="utf-8")
+    layout = parse_cv_layout_constraints(resume_document)
+
+    working_dir = tmp_path / "working"
+    output_dir = tmp_path / "cv"
+    description_path = output_dir / "job_description.txt"
+
+    long_skill = "A" * 41
+    valid_files = {
+        "resume.tex": "\\documentclass{article}",
+        "sections/objective.tex": "Short objective with enough words for validation here.",
+        "sections/skills.tex": r"\skills{Languages} & & {Go} \\",
+        "sections/experience.tex": (
+            r"\subtext{Northwind Systems \hfill Remote}"
+            r"\begin{zitemize}"
+            r"\item Operated \textbf{systems} with metrics and alerts for on-call."
+            r"\end{zitemize}"
+        ),
+        "sections/education.tex": "% ok",
+        "sections/previous.tex": "% ok",
+        "sections/Accomplishments.tex": "% ok",
+    }
+    invalid_files = dict(valid_files)
+    invalid_files["sections/skills.tex"] = rf"\skills{{Languages}} & & {{{long_skill}}} \\"
+
+    tailor_calls: list[str | None] = []
+
+    def fake_tailor(**kwargs: object) -> GeminiCvTailorResult:
+        revision = kwargs.get("layout_revision_message")
+        tailor_calls.append(revision if isinstance(revision, str) else None)
+        files = invalid_files if len(tailor_calls) == 1 else valid_files
+        return GeminiCvTailorResult(
+            company_name="Acme Corp",
+            position_title="Site Reliability Engineer",
+            files=files,
+        )
+
+    def fake_compile(*, working_dir: Path, **_kwargs: object) -> Path:
+        pdf = working_dir / "resume.pdf"
+        pdf.write_bytes(b"%PDF-1.4")
+        return pdf
+
+    with (
+        patch(
+            "job_hunter.cv_generate.run_cv_generate.working_cv_template_dir",
+            return_value=working_dir,
+        ),
+        patch(
+            "job_hunter.cv_generate.run_cv_generate.job_description_path",
+            return_value=description_path,
+        ),
+        patch(
+            "job_hunter.cv_generate.run_cv_generate.fetch_and_save_job_description",
+            side_effect=lambda **_kwargs: (
+                description_path.parent.mkdir(parents=True, exist_ok=True),
+                description_path.write_text("Build reliable systems.", encoding="utf-8"),
+                "Build reliable systems.",
+            )[-1],
+        ),
+        patch(
+            "job_hunter.cv_generate.run_cv_generate.read_editable_template_files",
+            return_value={"resume.tex": "% t"},
+        ),
+    ):
+        caplog.set_level(logging.WARNING, logger="job_hunter.cv_generate.run_cv_generate")
+        pdf_path = run_cv_generate(
+            resume_path=resume_path,
+            template_path=template_dir,
+            output_dir=output_dir,
+            tailor_cv=fake_tailor,
+            compile_pdf=fake_compile,
+        )
+
+    assert pdf_path.is_file()
+    assert len(tailor_calls) == 2
+    assert tailor_calls[0] is None
+    assert tailor_calls[1] is not None
+    assert "cv_layout limits" in tailor_calls[1]
+    validate_tailored_layout(files=valid_files, layout=layout, resume_max_pages=1)
+    assert any("cv_generate.layout_retry " in record.message for record in caplog.records)
+    assert any(
+        "skills skill name length" in record.message and "layout_retry_part" in record.message
+        for record in caplog.records
+    )
+
+
+def test_run_cv_generate_raises_after_layout_retries_exhausted(tmp_path: Path) -> None:
+    template_dir = tmp_path / "cv_template"
+    template_dir.mkdir()
+    (template_dir / "resume.tex").write_text("\\documentclass{article}", encoding="utf-8")
+
+    resume_path = tmp_path / "resume.yaml"
+    resume_path.write_text(
+        yaml.safe_dump(
+            {
+                "resume_max_pages": 1,
+                "target_job_url": "https://example.com/jobs/99",
+                "cv_layout": {
+                    "about_me_word_count": {"min": 5, "max": 100},
+                    "experience_bullets_per_page": 1,
+                    "experience_bullet_word_count": {"min": 3, "max": 50},
+                },
+                "profile": {"name": "Alex", "email": "a@example.com", "links": {}},
+                "summary": {},
+                "skills": {},
+                "experience": [{"company": "Northwind Systems", "title": "SRE"}],
+                "education": [],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    long_skill = "A" * 41
+    invalid_files = {
+        "resume.tex": "\\documentclass{article}",
+        "sections/objective.tex": "Short objective with enough words for validation here.",
+        "sections/skills.tex": rf"\skills{{Languages}} & & {{{long_skill}}} \\",
+        "sections/experience.tex": (
+            r"\begin{zitemize}"
+            r"\item Operated \textbf{systems} with metrics and alerts for on-call."
+            r"\end{zitemize}"
+        ),
+        "sections/education.tex": "% ok",
+        "sections/previous.tex": "% ok",
+        "sections/Accomplishments.tex": "% ok",
+    }
+
+    working_dir = tmp_path / "working"
+    output_dir = tmp_path / "cv"
+    description_path = output_dir / "job_description.txt"
+
+    def always_invalid_tailor(**_kwargs: object) -> GeminiCvTailorResult:
+        return GeminiCvTailorResult(
+            company_name="Acme Corp",
+            position_title="Site Reliability Engineer",
+            files=invalid_files,
+        )
+
+    with (
+        patch(
+            "job_hunter.cv_generate.run_cv_generate.working_cv_template_dir",
+            return_value=working_dir,
+        ),
+        patch(
+            "job_hunter.cv_generate.run_cv_generate.job_description_path",
+            return_value=description_path,
+        ),
+        patch(
+            "job_hunter.cv_generate.run_cv_generate.fetch_and_save_job_description",
+            side_effect=lambda **_kwargs: (
+                description_path.parent.mkdir(parents=True, exist_ok=True),
+                description_path.write_text("job", encoding="utf-8"),
+                "job",
+            )[-1],
+        ),
+        patch(
+            "job_hunter.cv_generate.run_cv_generate.read_editable_template_files",
+            return_value={"resume.tex": "% t"},
+        ),
+        pytest.raises(ValueError, match="cv_layout limits"),
+    ):
+        run_cv_generate(
+            resume_path=resume_path,
+            template_path=template_dir,
+            output_dir=output_dir,
+            tailor_cv=always_invalid_tailor,
+            compile_pdf=lambda **_kwargs: tmp_path / "resume.pdf",
+        )

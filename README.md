@@ -144,7 +144,7 @@ cv_layout:
 about_me_note: "Optional angle for the objective / about-me paragraph (preserved across resume:ingest)."
 ```
 
-``cv_layout`` and ``about_me_note`` are manual (preserved across ``resume:ingest``). Gemini must follow these limits for the objective (about me) and experience bullets; ``sections/experience.tex`` must contain **exactly** ``experience_bullets_per_page × resume_max_pages`` ``\\item`` lines (Python caps excess lines, then validation rejects if the count is too low or too high). Experience bullets are **verbatim** ``resume.yaml`` highlights (selection and reorder only—no rephrasing); each uses exactly 1–2 ``\\textbf{}`` keywords on words already in the highlight. ``sections/skills.tex`` is limited to **at most 5** skill categories and **at most 40 characters** per skill name (enforced in the Gemini prompt and by Python validation).
+``cv_layout`` and ``about_me_note`` are manual (preserved across ``resume:ingest``). Gemini must follow these limits for the objective (about me) and experience bullets; ``sections/experience.tex`` must contain **exactly** ``experience_bullets_per_page × resume_max_pages`` ``\\item`` lines (Python caps excess lines, then validation rejects if the count is too low or too high). Experience bullets are **verbatim** ``resume.yaml`` highlights (selection and reorder only—no rephrasing); each uses exactly 1–2 ``\\textbf{}`` keywords on words already in the highlight. ``sections/skills.tex`` is limited to **at most 5** skill categories and **at most 40 characters** per skill name (enforced in the Gemini prompt and by Python validation). If validation still fails, the tool re-prompts Gemini up to **three** more times with the violation list and asks for shorter wording before giving up.
 
 Run:
 

@@ -19,8 +19,13 @@ from job_hunter.cv_generate.job_description import fetch_and_save_job_descriptio
 from job_hunter.cv_generate.latex_compile import compile_resume_pdf
 from job_hunter.cv_generate.template_copy import copy_cv_template
 from job_hunter.cv_generate.template_files import read_editable_template_files, write_tailored_files
-from job_hunter.cv_generate.layout_constraints import parse_cv_layout_constraints
-from job_hunter.cv_generate.validate_layout import validate_tailored_layout
+from job_hunter.cv_generate.layout_constraints import CvLayoutConstraints, parse_cv_layout_constraints
+from job_hunter.cv_generate.validate_layout import (
+    collect_layout_violations,
+    format_layout_violations_error,
+    layout_violation_parts,
+    validate_tailored_layout,
+)
 from job_hunter.cv_generate.validate_previous import validate_previous_experience_format
 from job_hunter.cv_generate.validate_tailored import validate_employers_in_latex
 from job_hunter.paths import (
@@ -37,6 +42,35 @@ from job_hunter.resume_ingest.resume_settings import (
 )
 
 _logger = logging.getLogger(__name__)
+
+# Initial tailor attempt plus this many retries after cv_layout validation failures.
+_LAYOUT_VIOLATION_MAX_RETRIES = 3
+
+
+def _cap_experience_bullets(
+    *,
+    tailored_files: dict[str, str],
+    cv_layout: CvLayoutConstraints,
+    resume_max_pages: int,
+    run_id: str,
+) -> dict[str, str]:
+    experience_tex_key = "sections/experience.tex"
+    max_experience_bullets = cv_layout.max_total_experience_bullets(resume_max_pages)
+    if experience_tex_key not in tailored_files:
+        return tailored_files
+    before_count = count_latex_item_bullets(tailored_files[experience_tex_key])
+    capped_tex = cap_latex_item_bullets(tailored_files[experience_tex_key], max_experience_bullets)
+    if count_latex_item_bullets(capped_tex) >= before_count:
+        return tailored_files
+    _logger.info(
+        "cv_generate.cap_experience_bullets run_id=%s before=%s max=%s",
+        run_id,
+        before_count,
+        max_experience_bullets,
+    )
+    updated = dict(tailored_files)
+    updated[experience_tex_key] = capped_tex
+    return updated
 
 
 def run_cv_generate(
@@ -97,43 +131,67 @@ def run_cv_generate(
     experience_note_hints = collect_experience_notes(resume_document)
     about_me_note = parse_about_me_note(resume_document)
 
-    tailor_result = tailor_cv(
-        resume_yaml_text=resume_yaml_text,
-        job_description_text=job_description_text,
-        resume_max_pages=resume_max_pages,
-        template_files=template_files,
-        experience_note_hints=experience_note_hints,
-        about_me_note=about_me_note,
-        cv_layout_constraints=cv_layout,
-        gemini_binary=gemini_binary,
-        model=model,
-        debug=debug,
-    )
-    tailored_files = dict(tailor_result.files)
-    experience_tex_key = "sections/experience.tex"
-    max_experience_bullets = cv_layout.max_total_experience_bullets(resume_max_pages)
-    if experience_tex_key in tailored_files:
-        before_count = count_latex_item_bullets(tailored_files[experience_tex_key])
-        capped_tex = cap_latex_item_bullets(tailored_files[experience_tex_key], max_experience_bullets)
-        if count_latex_item_bullets(capped_tex) < before_count:
-            _logger.info(
-                "cv_generate.cap_experience_bullets run_id=%s before=%s max=%s",
-                run_id,
-                before_count,
-                max_experience_bullets,
-            )
-            tailored_files[experience_tex_key] = capped_tex
+    layout_revision_message: str | None = None
+    tailor_result: GeminiCvTailorResult | None = None
+    tailored_files: dict[str, str] = {}
+    max_layout_attempts = 1 + _LAYOUT_VIOLATION_MAX_RETRIES
 
-    validate_employers_in_latex(
-        resume_document=resume_document,
-        files=tailored_files,
-    )
-    validate_previous_experience_format(tailored_files)
-    validate_tailored_layout(
-        files=tailored_files,
-        layout=cv_layout,
-        resume_max_pages=resume_max_pages,
-    )
+    for layout_attempt in range(max_layout_attempts):
+        tailor_result = tailor_cv(
+            resume_yaml_text=resume_yaml_text,
+            job_description_text=job_description_text,
+            resume_max_pages=resume_max_pages,
+            template_files=template_files,
+            experience_note_hints=experience_note_hints,
+            about_me_note=about_me_note,
+            cv_layout_constraints=cv_layout,
+            layout_revision_message=layout_revision_message,
+            gemini_binary=gemini_binary,
+            model=model,
+            debug=debug,
+        )
+        tailored_files = _cap_experience_bullets(
+            tailored_files=dict(tailor_result.files),
+            cv_layout=cv_layout,
+            resume_max_pages=resume_max_pages,
+            run_id=run_id,
+        )
+        validate_employers_in_latex(
+            resume_document=resume_document,
+            files=tailored_files,
+        )
+        validate_previous_experience_format(tailored_files)
+        layout_violations = collect_layout_violations(
+            files=tailored_files,
+            layout=cv_layout,
+            resume_max_pages=resume_max_pages,
+        )
+        if not layout_violations:
+            break
+        if layout_attempt >= max_layout_attempts - 1:
+            raise ValueError(format_layout_violations_error(layout_violations))
+
+        retry_number = layout_attempt + 1
+        parts = layout_violation_parts(layout_violations)
+        layout_revision_message = format_layout_violations_error(layout_violations)
+        _logger.warning(
+            "cv_generate.layout_retry run_id=%s retry=%s/%s parts=%s",
+            run_id,
+            retry_number,
+            _LAYOUT_VIOLATION_MAX_RETRIES,
+            " | ".join(parts),
+        )
+        for violation in layout_violations:
+            _logger.warning(
+                "cv_generate.layout_retry_part run_id=%s retry=%s/%s part=%s detail=%s",
+                run_id,
+                retry_number,
+                _LAYOUT_VIOLATION_MAX_RETRIES,
+                violation.part_label,
+                violation.message,
+            )
+
+    assert tailor_result is not None
     write_tailored_files(working_dir, tailored_files)
 
     built_pdf = compile_pdf(

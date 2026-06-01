@@ -11,6 +11,7 @@ import pytest
 import yaml
 
 from job_hunter.cv_generate.filename import build_cv_pdf_filename, slugify_filename_part
+from job_hunter.cv_generate.gemini_ats import GeminiAtsReport
 from job_hunter.cv_generate.gemini_tailor import GeminiCvTailorResult
 from job_hunter.cv_generate.run_cv_generate import run_cv_generate
 from job_hunter.cv_generate.validate_layout import validate_tailored_layout
@@ -251,6 +252,9 @@ def test_run_cv_generate_end_to_end_mocked(tmp_path: Path) -> None:
         pdf.write_bytes(b"%PDF-1.4")
         return pdf
 
+    def fake_assess_ats(**_kwargs: object) -> GeminiAtsReport:
+        return GeminiAtsReport(score=80, missing_keywords=["Terraform"], note="Terraform is missing")
+
     with (
         patch(
             "job_hunter.cv_generate.run_cv_generate.working_cv_template_dir",
@@ -279,6 +283,7 @@ def test_run_cv_generate_end_to_end_mocked(tmp_path: Path) -> None:
             output_dir=output_dir,
             tailor_cv=fake_tailor,
             compile_pdf=fake_compile,
+            assess_ats=fake_assess_ats,
         )
 
     assert pdf_path.name == "Acme_Corp_Site_Reliability_Engineer.pdf"
@@ -362,6 +367,9 @@ def test_run_cv_generate_retries_tailor_on_layout_violation(
         pdf.write_bytes(b"%PDF-1.4")
         return pdf
 
+    def fake_assess_ats(**_kwargs: object) -> GeminiAtsReport:
+        return GeminiAtsReport(score=80, missing_keywords=["Terraform"], note="Terraform is missing")
+
     with (
         patch(
             "job_hunter.cv_generate.run_cv_generate.working_cv_template_dir",
@@ -391,6 +399,7 @@ def test_run_cv_generate_retries_tailor_on_layout_violation(
             output_dir=output_dir,
             tailor_cv=fake_tailor,
             compile_pdf=fake_compile,
+            assess_ats=fake_assess_ats,
         )
 
     assert pdf_path.is_file()
@@ -488,4 +497,5 @@ def test_run_cv_generate_raises_after_layout_retries_exhausted(tmp_path: Path) -
             output_dir=output_dir,
             tailor_cv=always_invalid_tailor,
             compile_pdf=lambda **_kwargs: tmp_path / "resume.pdf",
+            assess_ats=lambda **_kwargs: GeminiAtsReport(score=0, missing_keywords=[], note=""),
         )

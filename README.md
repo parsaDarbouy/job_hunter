@@ -159,6 +159,8 @@ python3 -m job_hunter cv:generate --resume ./data/resume.yaml --debug --model fl
 
 **Stdout:** absolute path to the generated PDF.
 
+**Stderr:** includes structured `INFO` logs plus a short ATS report block (score and missing keywords) printed after the PDF is generated.
+
 **Anti-hallucination:** the Gemini prompt forbids inventing employers, roles, dates, or skills; Python rejects tailored LaTeX that references employers not listed under `experience` in `resume.yaml`.
 
 **About-me note:** optional top-level `about_me_note` steers `sections/objective.tex` (within `cv_layout.about_me_word_count`), using only facts from the note and `resume.yaml`. The Gemini prompt instructs the model to write that section as an expert resume tailor (role-targeted summary, not a generic bio).

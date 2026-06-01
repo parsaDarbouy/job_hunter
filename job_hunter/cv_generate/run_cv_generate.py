@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 import shutil
 import time
 import uuid
@@ -15,6 +16,7 @@ from job_hunter.cv_generate.experience_notes import collect_experience_notes
 from job_hunter.cv_generate.latex_text_metrics import cap_latex_item_bullets, count_latex_item_bullets
 from job_hunter.cv_generate.filename import build_cv_pdf_filename
 from job_hunter.cv_generate.gemini_tailor import GeminiCvTailorResult, tailor_cv_with_gemini_cli
+from job_hunter.cv_generate.gemini_ats import assess_resume_vs_job_with_gemini_cli
 from job_hunter.cv_generate.job_description import fetch_and_save_job_description
 from job_hunter.cv_generate.latex_compile import compile_resume_pdf
 from job_hunter.cv_generate.template_copy import copy_cv_template
@@ -85,6 +87,7 @@ def run_cv_generate(
     latex_engine: str | None = None,
     tailor_cv: Callable[..., GeminiCvTailorResult] = tailor_cv_with_gemini_cli,
     compile_pdf: Callable[..., Path] = compile_resume_pdf,
+    assess_ats: Callable[..., object] = assess_resume_vs_job_with_gemini_cli,
 ) -> Path:
     """
     Generate a tailored CV PDF from resume.yaml and target_job_url.
@@ -206,6 +209,33 @@ def run_cv_generate(
     )
     destination = pdf_output_dir / output_name
     shutil.copy2(built_pdf, destination)
+
+    # After generating the tailored CV, run an ATS-style comparison of the
+    # candidate resume (resume.yaml) against the target job description.
+    try:
+        ats_report = assess_ats(
+            resume_yaml_text=resume_yaml_text,
+            job_description_text=job_description_text,
+            gemini_binary=gemini_binary,
+            model=model,
+            debug=debug,
+        )
+        # Keep this short and clearly separated from normal logs.
+        missing = ", ".join(getattr(ats_report, "missing_keywords", []) or [])
+        if missing:
+            missing_line = f"Missing keywords: {missing}"
+        else:
+            missing_line = "Missing keywords: None found"
+        note = str(getattr(ats_report, "note", "") or "").strip()
+        note_line = f"Resume lacks: {note}" if note else ""
+        print("\n==================== ATS REPORT ====================", file=sys.stderr)
+        print(f"Score: {getattr(ats_report, 'score', 0)}/100", file=sys.stderr)
+        print(missing_line, file=sys.stderr)
+        if note_line:
+            print(note_line, file=sys.stderr)
+        print("======================================================\n", file=sys.stderr)
+    except Exception as exc:  # pragma: no cover - ATS is best-effort
+        _logger.warning("cv_generate.ats_failed run_id=%s error=%s", run_id, exc)
 
     elapsed = time.monotonic() - started
     _logger.info(

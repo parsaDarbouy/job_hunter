@@ -1,0 +1,21 @@
+# Global fintech employers with distributed teams; careers pages for ``query.yaml`` tracking only
+# (no automated HTML scrape yet). Chosen to complement API-backed ``*.fintech.yaml`` rows without
+# duplicating those ATS entries.
+
+careers_pages:
+  - url: https://www.checkout.com/careers
+    display_name: Checkout.com Careers
+  - url: https://www.chainalysis.com/careers/
+    display_name: Chainalysis Careers
+  - url: https://www.mambu.com/en/careers
+    display_name: Mambu Careers
+  - url: https://www.dwolla.com/company/careers/
+    display_name: Dwolla Careers
+  - url: https://www.signifyd.com/careers/
+    display_name: Signifyd Careers
+  - url: https://www.pinwheelapi.com/careers
+    display_name: Pinwheel Careers
+  - url: https://www.ocrolus.com/careers/
+    display_name: Ocrolus Careers
+  - url: https://increase.com/careers
+    display_name: Increase Careers

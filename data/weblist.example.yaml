@@ -102,6 +102,27 @@ sources:
     kind: custom_career_page
     careers_pages_registry: package:career_pages.us_hires_canada.yaml
 
+  # Global remote–friendly fintech employers (``*.fintech.yaml`` in registries/).
+  - id: greenhouse_fintech
+    kind: greenhouse
+    board_tokens_registry: package:greenhouse_boards.fintech.yaml
+
+  - id: ashby_fintech
+    kind: ashby
+    organization_slugs_registry: package:ashby_organization_slugs.fintech.yaml
+
+  - id: workable_fintech
+    kind: workable
+    apply_account_slugs_registry: package:workable_apply_slugs.fintech.yaml
+
+  - id: lever_fintech
+    kind: lever
+    site_slugs_registry: package:lever_site_slugs.fintech.yaml
+
+  - id: custom_career_fintech
+    kind: custom_career_page
+    careers_pages_registry: package:career_pages.fintech.yaml
+
   # Inline extras (merged with their own ids if you prefer single-board rows):
   # - id: greenhouse_extra
   #   kind: greenhouse

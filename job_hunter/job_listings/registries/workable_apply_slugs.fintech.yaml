@@ -1,0 +1,21 @@
+# Global remote-friendly fintech employers (payments, banking, lending, fraud, treasury, insurtech).
+# Apply account slugs verified via Workable widget API (``apply.workable.com/api/v1/widget/accounts/{slug}``).
+# Each company appears in at most one ``*.fintech.yaml`` registry file.
+
+apply_account_slugs:
+  - afterpay
+  - anchorage
+  - circle
+  - finix
+  - flywire
+  - klarna
+  - moov
+  - nium
+  - onfido
+  - paypal
+  - pipe
+  - rapyd
+  - remitly
+  - revolut
+  - varo
+  - wise

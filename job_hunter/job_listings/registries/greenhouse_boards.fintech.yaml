@@ -1,0 +1,50 @@
+# Global remote-friendly fintech employers (payments, banking, lending, fraud, treasury, insurtech).
+# Board tokens verified via Greenhouse public jobs JSON (``boards-api.greenhouse.io``).
+# Each company appears in at most one ``*.fintech.yaml`` registry file.
+
+board_tokens:
+  - adyen
+  - affirm
+  - alloy
+  - alpaca
+  - betterment
+  - bitgo
+  - block
+  - brex
+  - carta
+  - chime
+  - coinbase
+  - complyadvantage
+  - current
+  - drivewealth
+  - feedzai
+  - figure
+  - fireblocks
+  - forter
+  - galileo
+  - gemini
+  - gocardless
+  - highnote
+  - jumio
+  - lithic
+  - mangopay
+  - marqeta
+  - melio
+  - mercury
+  - monzo
+  - n26
+  - novacredit
+  - nubank
+  - payoneer
+  - riskified
+  - robinhood
+  - root
+  - sezzle
+  - sofi
+  - solarisbank
+  - stripe
+  - taxbit
+  - thunes
+  - treasuryprime
+  - truelayer
+  - upstart

@@ -1,0 +1,32 @@
+# Global remote-friendly fintech employers (payments, banking, lending, fraud, treasury, insurtech).
+# Organization slugs verified via Ashby public posting API (``api.ashbyhq.com``).
+# Each company appears in at most one ``*.fintech.yaml`` registry file.
+
+organization_slugs:
+  - airwallex
+  - belvo
+  - capchase
+  - clearco
+  - codat
+  - column
+  - deel
+  - elliptic
+  - expensify
+  - finch
+  - imprint
+  - kraken
+  - lemonade
+  - middesk
+  - moderntreasury
+  - mollie
+  - parafin
+  - paxos
+  - persona
+  - plaid
+  - ramp
+  - rutter
+  - sardine
+  - socure
+  - synctera
+  - trulioo
+  - unit

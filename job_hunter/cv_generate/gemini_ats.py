@@ -1,13 +1,13 @@
-"""Gemini CLI ATS-style scoring for resume YAML vs job description text."""
+"""Antigravity CLI / legacy Gemini CLI ATS-style scoring for resume YAML vs job description text."""
 
 from __future__ import annotations
 
 import json
 import logging
-import subprocess
 from dataclasses import dataclass
 from typing import Any
 
+from job_hunter.agent_cli import DEFAULT_AGENT_BINARY, run_agent_cli_headless
 from job_hunter.json_extract import extract_json_object
 
 _logger = logging.getLogger(__name__)
@@ -102,67 +102,22 @@ def assess_resume_vs_job_with_gemini_cli(
     *,
     resume_yaml_text: str,
     job_description_text: str,
-    gemini_binary: str = "gemini",
+    gemini_binary: str = DEFAULT_AGENT_BINARY,
     model: str = "flash",
     debug: bool = False,
 ) -> GeminiAtsReport:
-    """Run Gemini CLI in headless mode and return an ATS-style match report."""
+    """Run Antigravity CLI (``agy``) or legacy Gemini CLI and return an ATS-style match report."""
     input_payload = {
         "resume_yaml": resume_yaml_text,
         "job_description_text": job_description_text,
     }
     stdin_payload = "---CV-ATS-INPUT---\n" + json.dumps(input_payload, ensure_ascii=False)
-    command = [
-        gemini_binary,
-        "-p",
-        _ATS_PROMPT,
-        "--output-format",
-        "json",
-        "-m",
-        model,
-        "--skip-trust",
-    ]
-    try:
-        completed = subprocess.run(
-            command,
-            input=stdin_payload,
-            text=True,
-            capture_output=True,
-            check=False,
-            timeout=600,
-        )
-    except FileNotFoundError as exc:
-        raise FileNotFoundError(
-            f"Gemini CLI not found ({gemini_binary}). Install with: npm install -g @google/gemini-cli"
-        ) from exc
-
-    if debug:
-        if completed.stdout:
-            _logger.debug("gemini_ats.subprocess stdout_bytes=%s", len(completed.stdout))
-        if completed.stderr:
-            err_text = completed.stderr.strip()
-            if len(err_text) > 2_000:
-                err_text = err_text[:2_000] + "…(truncated)"
-            _logger.debug("gemini_ats.subprocess stderr=%s", err_text)
-
-    if completed.returncode != 0:
-        raise RuntimeError(
-            f"Gemini CLI exited with {completed.returncode}: {completed.stderr.strip() or completed.stdout.strip()}"
-        )
-
-    try:
-        envelope = json.loads(completed.stdout)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("Gemini CLI did not return valid JSON envelope") from exc
-
-    if isinstance(envelope, dict) and envelope.get("error"):
-        err = envelope["error"]
-        message = err.get("message", str(err)) if isinstance(err, dict) else str(err)
-        raise RuntimeError(f"Gemini CLI error: {message}")
-
-    response_text = envelope.get("response") if isinstance(envelope, dict) else None
-    if not isinstance(response_text, str) or not response_text.strip():
-        raise RuntimeError("Gemini CLI JSON envelope missing response text")
-
+    response_text = run_agent_cli_headless(
+        agent_binary=gemini_binary,
+        prompt=_ATS_PROMPT,
+        stdin_payload=stdin_payload,
+        model=model,
+        debug=debug,
+    )
     return parse_ats_report_from_llm_response(response_text)
 

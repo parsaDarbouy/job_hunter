@@ -1,4 +1,4 @@
-description = "Ingest a PDF resume into normalized resume.yaml using Gemini CLI (job-hunter)."
+description = "Ingest a PDF resume into normalized resume.yaml using Antigravity CLI (job-hunter)."
 
 prompt = """
 You are the job-hunter resume ingestion assistant.
@@ -12,7 +12,8 @@ python3 -m job_hunter resume:ingest PATH_TO_RESUME.pdf
 Optional flags:
 - `-o /path/to/resume.yaml` to change the output location (default: `./data/resume.yaml`)
 - `--debug` for verbose diagnostics
-- `--model flash` (or another Gemini CLI model alias)
+- `--model flash` (or another agent CLI model alias)
+- `--gemini-binary agy` (default; use `--gemini-binary gemini` for legacy Gemini CLI with a paid API key)
 
 Requirements:
 - Do not print the full resume text unless `--debug` is used and the user asked for it.

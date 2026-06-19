@@ -1,13 +1,13 @@
-"""Gemini CLI tailoring of LaTeX CV files from resume YAML and job description."""
+"""Antigravity CLI / legacy Gemini CLI tailoring of LaTeX CV files from resume YAML and job description."""
 
 from __future__ import annotations
 
 import json
 import logging
-import subprocess
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from job_hunter.agent_cli import DEFAULT_AGENT_BINARY, run_agent_cli_headless
 from job_hunter.cv_generate.layout_constraints import CvLayoutConstraints
 from job_hunter.json_extract import extract_json_object
 
@@ -101,15 +101,15 @@ def tailor_cv_with_gemini_cli(
     about_me_note: str = "",
     cv_layout_constraints: CvLayoutConstraints | None = None,
     layout_revision_message: str | None = None,
-    gemini_binary: str = "gemini",
+    gemini_binary: str = DEFAULT_AGENT_BINARY,
     model: str = "flash",
     debug: bool = False,
 ) -> GeminiCvTailorResult:
     """
-    Run Gemini CLI in headless mode and parse tailored LaTeX file contents.
+    Run Antigravity CLI (``agy``) or legacy Gemini CLI and parse tailored LaTeX file contents.
 
     Raises RuntimeError on CLI failures or invalid JSON.
-    Raises FileNotFoundError if the gemini binary is missing.
+    Raises FileNotFoundError if the agent binary is missing.
     """
     input_payload: dict[str, Any] = {
         "resume_max_pages": resume_max_pages,
@@ -132,62 +132,19 @@ def tailor_cv_with_gemini_cli(
     if revision_text:
         prompt = prompt + _LAYOUT_REVISION_SUFFIX.format(message=revision_text)
     stdin_payload = "---CV-GENERATE-INPUT---\n" + json.dumps(input_payload, ensure_ascii=False)
-    command = [
-        gemini_binary,
-        "-p",
-        prompt,
-        "--output-format",
-        "json",
-        "-m",
-        model,
-        "--skip-trust",
-    ]
-    try:
-        completed = subprocess.run(
-            command,
-            input=stdin_payload,
-            text=True,
-            capture_output=True,
-            check=False,
-            timeout=900,
-        )
-    except FileNotFoundError as exc:
-        raise FileNotFoundError(
-            f"Gemini CLI not found ({gemini_binary}). Install with: npm install -g @google/gemini-cli"
-        ) from exc
-
-    if debug:
-        if completed.stdout:
-            _logger.debug("gemini_tailor.subprocess stdout_bytes=%s", len(completed.stdout))
-        if completed.stderr:
-            err_text = completed.stderr.strip()
-            if len(err_text) > 2_000:
-                err_text = err_text[:2_000] + "…(truncated)"
-            _logger.debug("gemini_tailor.subprocess stderr=%s", err_text)
-
-    if completed.returncode != 0:
-        raise RuntimeError(
-            f"Gemini CLI exited with {completed.returncode}: {completed.stderr.strip() or completed.stdout.strip()}"
-        )
-
-    try:
-        envelope = json.loads(completed.stdout)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("Gemini CLI did not return valid JSON envelope") from exc
-
-    if isinstance(envelope, dict) and envelope.get("error"):
-        err = envelope["error"]
-        message = err.get("message", str(err)) if isinstance(err, dict) else str(err)
-        raise RuntimeError(f"Gemini CLI error: {message}")
-
-    response_text = envelope.get("response") if isinstance(envelope, dict) else None
-    if not isinstance(response_text, str) or not response_text.strip():
-        raise RuntimeError("Gemini CLI JSON envelope missing response text")
+    response_text = run_agent_cli_headless(
+        agent_binary=gemini_binary,
+        prompt=prompt,
+        stdin_payload=stdin_payload,
+        model=model,
+        timeout=900,
+        debug=debug,
+    )
 
     try:
         parsed = extract_json_object(response_text)
     except (ValueError, json.JSONDecodeError) as exc:
-        raise RuntimeError("Gemini CLI response did not contain a valid JSON object") from exc
+        raise RuntimeError("Agent CLI response did not contain a valid JSON object") from exc
 
     company_name = str(parsed.get("company_name") or "").strip()
     position_title = str(parsed.get("position_title") or "").strip()

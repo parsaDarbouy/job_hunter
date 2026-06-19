@@ -1,18 +1,14 @@
-"""Gemini CLI job-fit scoring."""
+"""Antigravity CLI / legacy Gemini CLI job-fit scoring."""
 
 from __future__ import annotations
 
 import json
-import logging
-import subprocess
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from job_hunter.agent_cli import DEFAULT_AGENT_BINARY, run_agent_cli_headless
 from job_hunter.job_listings.write_jobs_csv import JOB_DESCRIPTION_COLUMN
 from job_hunter.json_extract import extract_json_object
-
-_logger = logging.getLogger(__name__)
-
 
 _FILTER_PROMPT = """You are a job-fit evaluation engine.
 
@@ -75,16 +71,16 @@ def assess_job_with_gemini_cli(
     resume_yaml_text: str,
     position_yaml_text: str,
     minimum_alignment_percentage: int,
-    gemini_binary: str = "gemini",
+    gemini_binary: str = DEFAULT_AGENT_BINARY,
     model: str = "flash",
     max_description_chars: int = 30_000,
     debug: bool = False,
 ) -> GeminiJobAssessment:
     """
-    Run Gemini CLI in headless mode and parse a strict JSON job-fit assessment.
+    Run Antigravity CLI (``agy``) or legacy Gemini CLI and parse a strict JSON job-fit assessment.
 
     Raises RuntimeError on CLI failures or invalid JSON.
-    Raises FileNotFoundError if the gemini binary is missing.
+    Raises FileNotFoundError if the agent binary is missing.
     """
     input_payload = {
         "minimum_alignment_percentage": minimum_alignment_percentage,
@@ -93,62 +89,18 @@ def assess_job_with_gemini_cli(
         "job": _model_row(row, max_description_chars),
     }
     stdin_payload = "---JOB-FILTERING-INPUT---\n" + json.dumps(input_payload, ensure_ascii=False)
-    command = [
-        gemini_binary,
-        "-p",
-        _FILTER_PROMPT,
-        "--output-format",
-        "json",
-        "-m",
-        model,
-        "--skip-trust",
-    ]
-    try:
-        completed = subprocess.run(
-            command,
-            input=stdin_payload,
-            text=True,
-            capture_output=True,
-            check=False,
-            timeout=600,
-        )
-    except FileNotFoundError as exc:
-        raise FileNotFoundError(
-            f"Gemini CLI not found ({gemini_binary}). Install with: npm install -g @google/gemini-cli"
-        ) from exc
-
-    if debug:
-        if completed.stdout:
-            _logger.debug("gemini_filter.subprocess stdout_bytes=%s", len(completed.stdout))
-        if completed.stderr:
-            err_text = completed.stderr.strip()
-            if len(err_text) > 2_000:
-                err_text = err_text[:2_000] + "…(truncated)"
-            _logger.debug("gemini_filter.subprocess stderr=%s", err_text)
-
-    if completed.returncode != 0:
-        raise RuntimeError(
-            f"Gemini CLI exited with {completed.returncode}: {completed.stderr.strip() or completed.stdout.strip()}"
-        )
-
-    try:
-        envelope = json.loads(completed.stdout)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("Gemini CLI did not return valid JSON envelope") from exc
-
-    if isinstance(envelope, dict) and envelope.get("error"):
-        err = envelope["error"]
-        message = err.get("message", str(err)) if isinstance(err, dict) else str(err)
-        raise RuntimeError(f"Gemini CLI error: {message}")
-
-    response_text = envelope.get("response") if isinstance(envelope, dict) else None
-    if not isinstance(response_text, str) or not response_text.strip():
-        raise RuntimeError("Gemini CLI JSON envelope missing response text")
+    response_text = run_agent_cli_headless(
+        agent_binary=gemini_binary,
+        prompt=_FILTER_PROMPT,
+        stdin_payload=stdin_payload,
+        model=model,
+        debug=debug,
+    )
 
     try:
         parsed = extract_json_object(response_text)
     except (ValueError, json.JSONDecodeError) as exc:
-        raise RuntimeError("Gemini CLI response did not contain a valid JSON object") from exc
+        raise RuntimeError("Agent CLI response did not contain a valid JSON object") from exc
 
     percentage = _coerce_percentage(parsed.get("alignment_percentage"))
     passes = _coerce_bool(parsed.get("passes")) and percentage >= minimum_alignment_percentage

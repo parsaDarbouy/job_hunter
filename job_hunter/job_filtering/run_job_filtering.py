@@ -13,6 +13,7 @@ from typing import Callable, TextIO
 import yaml
 
 from job_hunter.job_filtering.csv_io import FilteredJobsCsvStreamWriter, read_jobs_csv_rows, write_jobs_csv_rows
+from job_hunter.agent_cli import DEFAULT_AGENT_BINARY
 from job_hunter.job_filtering.gemini_filter import GeminiJobAssessment, assess_job_with_gemini_cli
 from job_hunter.job_filtering.job_page_text import fetch_job_description
 from job_hunter.job_listings.write_jobs_csv import ADDED_TO_LIST_DATE_COLUMN, JOB_DESCRIPTION_COLUMN
@@ -75,7 +76,7 @@ def run_job_filtering(
     resume_path: Path | None = None,
     position_path: Path | None = None,
     output_path: Path | None = None,
-    gemini_binary: str = "gemini",
+    gemini_binary: str = DEFAULT_AGENT_BINARY,
     model: str = "flash",
     max_description_chars: int = 30_000,
     debug: bool = False,

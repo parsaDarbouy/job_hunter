@@ -14,7 +14,7 @@ def build_resume_document(
     normalized: Mapping[str, Any],
     *,
     source_file: str,
-    parsed_by: str = "gemini-cli-agent",
+    parsed_by: str = "antigravity-cli-agent",
 ) -> dict[str, Any]:
     """Assemble the final on-disk schema with metadata."""
     return {

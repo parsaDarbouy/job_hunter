@@ -1,11 +1,10 @@
-"""Call Gemini CLI headlessly to extract structured resume fields as JSON."""
+"""Call Antigravity CLI or legacy Gemini CLI headlessly to extract structured resume fields as JSON."""
 
 from __future__ import annotations
 
-import json
-import subprocess
 from typing import Any
 
+from job_hunter.agent_cli import DEFAULT_AGENT_BINARY, run_agent_cli_headless
 from job_hunter.json_extract import extract_json_object
 
 _EXTRACTION_PROMPT = """You are a resume extraction engine. Your input is plain text extracted from a PDF resume (it may have line breaks or minor OCR-like noise).
@@ -77,64 +76,24 @@ The resume text follows on stdin after a single line containing only: ---RESUME-
 def parse_resume_with_gemini_cli(
     cleaned_resume_text: str,
     *,
-    gemini_binary: str = "gemini",
+    gemini_binary: str = DEFAULT_AGENT_BINARY,
     model: str = "flash",
     debug: bool = False,
 ) -> dict[str, Any]:
     """
-    Run Gemini CLI in headless mode with JSON output and parse the inner payload.
+    Run Antigravity CLI (``agy``) or legacy Gemini CLI in headless mode and parse JSON payload.
 
     Raises RuntimeError on CLI failures or invalid JSON.
-    Raises FileNotFoundError if the gemini binary is missing.
+    Raises FileNotFoundError if the agent binary is missing.
     """
     stdin_payload = f"---RESUME---\n{cleaned_resume_text}"
-    command = [
-        gemini_binary,
-        "-p",
-        _EXTRACTION_PROMPT,
-        "--output-format",
-        "json",
-        "-m",
-        model,
-        "--skip-trust",
-    ]
-    try:
-        completed = subprocess.run(
-            command,
-            input=stdin_payload,
-            text=True,
-            capture_output=True,
-            check=False,
-            timeout=600,
-        )
-    except FileNotFoundError as exc:
-        raise FileNotFoundError(
-            f"Gemini CLI not found ({gemini_binary}). Install with: npm install -g @google/gemini-cli"
-        ) from exc
-
+    response_text = run_agent_cli_headless(
+        agent_binary=gemini_binary,
+        prompt=_EXTRACTION_PROMPT,
+        stdin_payload=stdin_payload,
+        model=model,
+        debug=debug,
+    )
     if debug:
-        if completed.stdout:
-            print("[debug] gemini stdout length:", len(completed.stdout))
-        if completed.stderr:
-            print("[debug] gemini stderr:\n", completed.stderr)
-
-    if completed.returncode != 0:
-        raise RuntimeError(
-            f"Gemini CLI exited with {completed.returncode}: {completed.stderr.strip() or completed.stdout.strip()}"
-        )
-
-    try:
-        envelope = json.loads(completed.stdout)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("Gemini CLI did not return valid JSON envelope") from exc
-
-    if isinstance(envelope, dict) and envelope.get("error"):
-        err = envelope["error"]
-        message = err.get("message", str(err)) if isinstance(err, dict) else str(err)
-        raise RuntimeError(f"Gemini CLI error: {message}")
-
-    response_text = envelope.get("response") if isinstance(envelope, dict) else None
-    if not isinstance(response_text, str) or not response_text.strip():
-        raise RuntimeError("Gemini CLI JSON envelope missing response text")
-
+        print("[debug] agent stdout length:", len(response_text))
     return extract_json_object(response_text)

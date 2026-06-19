@@ -14,10 +14,11 @@ Optional flags:
 - `--template ./data/cv_template` to override the LaTeX source tree
 - `--output-dir ./data/cv` for the generated PDF
 - `--debug` for verbose diagnostics
-- `--model flash` (or another Gemini CLI model alias)
+- `--model flash` (or another agent CLI model alias)
+- `--gemini-binary agy` (default; use `--gemini-binary gemini` for legacy Gemini CLI with a paid API key)
 
 Requirements:
-- Do not invent employers, roles, dates, or skills when discussing the CV; the tool forbids fabrication in its Gemini prompt and validates employers against resume.yaml.
+- Do not invent employers, roles, dates, or skills when discussing the CV; the tool forbids fabrication in its agent prompt and validates employers against resume.yaml.
 - Requires `pdflatex` on PATH (MacTeX or TeX Live).
 - After the command finishes, confirm the printed PDF path and the saved job description at `data/cv/job_description.txt`.
 

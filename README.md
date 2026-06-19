@@ -9,7 +9,7 @@ Copy `data/position.example.yaml` → `data/position.yaml` and `data/weblist.exa
 ## Prerequisites
 
 - Python 3.11+
-- [Gemini CLI](https://github.com/google-gemini/gemini-cli) installed and authenticated (`gemini auth`)
+- [Antigravity CLI](https://antigravity.google) (`agy`) installed and signed in (legacy [Gemini CLI](https://github.com/google-gemini/gemini-cli) still works with a paid API key via `--gemini-binary gemini`)
 - For **`cv:generate`**: [Tectonic](https://tectonic-typesetting.github.io/) (`brew install tectonic`) is preferred (auto-downloads LaTeX packages). `pdflatex` (MacTeX / BasicTeX) is used as a fallback; BasicTeX often needs extra `tlmgr install` packages for this template.
 
 ## Setup
@@ -19,14 +19,15 @@ cd job_hunter
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-npm install -g @google/gemini-cli
-gemini auth
-gemini --version
+npm install -g @google/gemini-cli   # optional legacy fallback
+curl -fsSL https://antigravity.google/cli/install.sh | bash
+agy   # first run: complete Google OAuth sign-in in the browser
+agy --version
 ```
 
 ## Command: `resume:ingest`
 
-Ingest a PDF, extract structure with **Gemini CLI** (headless JSON mode), normalize deterministically in Python, and write YAML.
+Ingest a PDF, extract structure with **Antigravity CLI** (`agy`) or legacy **Gemini CLI** (headless JSON mode), normalize deterministically in Python, and write YAML.
 
 ```bash
 python3 -m job_hunter resume:ingest ./resume.pdf
@@ -54,9 +55,9 @@ job-hunter resume:ingest ./resume.pdf
 - `accomplishments` (certifications, awards, speaking: `title`, `detail`, `date`)
 - `metadata` (`parsed_by`, `source_file`)
 
-### Gemini CLI custom command
+### Antigravity CLI custom commands
 
-Gemini CLI loads project commands from `.gemini/commands/`. See `.gemini/commands/resume-ingest.toml`.
+Antigravity CLI can import legacy Gemini project commands: run `agy plugin import gemini` from the repo root. Sources live under `.gemini/commands/` (for example `.gemini/commands/resume-ingest.toml`).
 
 ## Command: `listings:export`
 
@@ -88,7 +89,7 @@ You can merge singles + lists + registry on one row; tokens are de-duplicated. F
 
 ## Command: `jobs:filter`
 
-Review exported jobs with **Gemini CLI** one by one. The command only evaluates rows where `added_to_list_date` equals the date you pass, so each listing batch can be processed once. If `data/jobs_export.csv` does not yet have the final `job_description` column, or a matching row has an empty value, the command fetches the job URL, extracts readable page text, stores it back in `jobs_export.csv`, and sends that description to Gemini. When HTML body text is empty, it uses Open Graph / meta descriptions when present (common on Workday career SPAs). If still empty, Greenhouse URLs fall back to the public boards API using the job id and an inferred board token from the host (`careers.{token}.com` or `boards.greenhouse.io/{token}/jobs/{id}`). Workday URLs (`*.myworkdayjobs.com`) fall back to the public ``/wday/cxs/`` JSON API.
+Review exported jobs with **Antigravity CLI** or legacy **Gemini CLI** one by one. The command only evaluates rows where `added_to_list_date` equals the date you pass, so each listing batch can be processed once. If `data/jobs_export.csv` does not yet have the final `job_description` column, or a matching row has an empty value, the command fetches the job URL, extracts readable page text, stores it back in `jobs_export.csv`, and sends that description to Gemini. When HTML body text is empty, it uses Open Graph / meta descriptions when present (common on Workday career SPAs). If still empty, Greenhouse URLs fall back to the public boards API using the job id and an inferred board token from the host (`careers.{token}.com` or `boards.greenhouse.io/{token}/jobs/{id}`). Workday URLs (`*.myworkdayjobs.com`) fall back to the public ``/wday/cxs/`` JSON API.
 
 Add or edit the threshold in `data/position.yaml`:
 
@@ -171,9 +172,9 @@ python3 -m job_hunter cv:generate --resume ./data/resume.yaml --debug --model fl
 
 **LaTeX engine:** default tries Tectonic, then `pdflatex`. Pin with `--latex-engine tectonic` or `--latex-engine pdflatex`. Environment: `JOB_HUNTER_LATEX_ENGINE`, `JOB_HUNTER_PDFLATEX`, `JOB_HUNTER_TECTONIC`.
 
-### Gemini CLI custom command
+### Antigravity CLI custom command
 
-See `.gemini/commands/cv-generate.toml`.
+See `.gemini/commands/cv-generate.toml` (import with `agy plugin import gemini`).
 
 ## Layout
 
@@ -183,19 +184,20 @@ See `.gemini/commands/cv-generate.toml`.
 | `data/cv_template/` | Tracked LaTeX CV template (`resume.tex`, `sections/`, `TLCresume.sty`; example profile only) |
 | `data/.cv_template/` | Gitignored working copy edited by Gemini before each compile |
 | `data/cv/` | Gitignored tailored PDFs and `job_description.txt` |
+| `job_hunter/agent_cli.py` | Shared headless runner for Antigravity CLI (`agy`) and legacy Gemini CLI |
 | `job_hunter/cli.py` | CLI entry (`resume:ingest`, `listings:export`, `jobs:filter`, `cv:generate`) |
 | `job_hunter/paths.py` | Shared default paths (`DATA_DIRECTORY`, default resume / weblist / position / query / CSV paths) |
 | `job_hunter/job_listings/` | Listing export: YAML plan, HTTP fetchers, filters, CSV writer |
-| `job_hunter/job_filtering/` | Date-scoped AI filtering: job page text extraction, Gemini scoring, filtered CSV writer |
 | `job_hunter/job_listings/registries/*.yaml` | Bundled example board lists (Greenhouse tokens, Ashby slugs, Workable slugs, Lever site slugs, career URLs) for `package:` weblist references; optional `*.blockchain.yaml`, `*.zapier.yaml`, `*.globally_remote.yaml`, `*.us_hires_canada.yaml`, and `*.fintech.yaml` packs. The `*.example.yaml` files include an extension aimed at globally remote-friendly employers (tokens/slugs validated against each vendor’s public listing API). |
 | `job_hunter/job_listings/weblist_expand.py` | Expands multi-company weblist rows before `query.yaml` and fetching |
 | `job_hunter/resume_ingest/pdf_loader.py` | PDF → text |
 | `job_hunter/resume_ingest/text_cleaner.py` | Deterministic whitespace cleanup |
-| `job_hunter/resume_ingest/resume_parser.py` | Gemini CLI subprocess + JSON extraction |
+| `job_hunter/job_filtering/` | Date-scoped AI filtering: job page text extraction, agent CLI scoring, filtered CSV writer |
+| `job_hunter/resume_ingest/resume_parser.py` | Antigravity CLI / legacy Gemini subprocess + JSON extraction |
 | `job_hunter/resume_ingest/normalize.py` | Durations, dedupe, stable ordering |
 | `job_hunter/resume_ingest/yaml_writer.py` | Canonical YAML serialization |
 | `job_hunter/resume_ingest/resume_settings.py` | `resume_max_pages` / `target_job_url` merge on ingest |
-| `job_hunter/cv_generate/` | CV tailoring: template copy, job fetch, Gemini LaTeX edits, validation, `pdflatex` |
+| `job_hunter/cv_generate/` | CV tailoring: template copy, job fetch, agent LaTeX edits, validation, `pdflatex` |
 
 `.gitignore` also excludes typical Python noise (extra venv names, mypy/ruff/pytest caches, packaging outputs, coverage, `.env`, `.DS_Store`) and keeps **resume intake private**: `resume.pdf` and `resume.yaml` match in any folder, plus everything under `data/` except `data/.gitkeep`, `data/position.example.yaml`, `data/weblist.example.yaml`, and `data/cv_template/`.
 

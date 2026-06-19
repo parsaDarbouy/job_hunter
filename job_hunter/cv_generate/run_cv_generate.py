@@ -15,8 +15,9 @@ import yaml
 from job_hunter.cv_generate.experience_notes import collect_experience_notes
 from job_hunter.cv_generate.latex_text_metrics import cap_latex_item_bullets, count_latex_item_bullets
 from job_hunter.cv_generate.filename import build_cv_pdf_filename
-from job_hunter.cv_generate.gemini_tailor import GeminiCvTailorResult, tailor_cv_with_gemini_cli
+from job_hunter.agent_cli import DEFAULT_AGENT_BINARY
 from job_hunter.cv_generate.gemini_ats import assess_resume_vs_job_with_gemini_cli
+from job_hunter.cv_generate.gemini_tailor import GeminiCvTailorResult, tailor_cv_with_gemini_cli
 from job_hunter.cv_generate.job_description import fetch_and_save_job_description
 from job_hunter.cv_generate.latex_compile import compile_resume_pdf
 from job_hunter.cv_generate.template_copy import copy_cv_template
@@ -80,7 +81,7 @@ def run_cv_generate(
     resume_path: Path | None = None,
     template_path: Path | None = None,
     output_dir: Path | None = None,
-    gemini_binary: str = "gemini",
+    gemini_binary: str = DEFAULT_AGENT_BINARY,
     model: str = "flash",
     debug: bool = False,
     pdflatex_path: str | None = None,

@@ -8,6 +8,7 @@ import logging
 import sys
 from pathlib import Path
 
+from job_hunter.agent_cli import DEFAULT_AGENT_BINARY
 from job_hunter.paths import (
     default_filtered_jobs_csv_path,
     default_jobs_export_csv_path,
@@ -71,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
 
     ingest = subparsers.add_parser(
         "resume:ingest",
-        help="Extract a PDF resume via Gemini CLI and write resume.yaml",
+        help="Extract a PDF resume via Antigravity CLI and write resume.yaml",
     )
     ingest.add_argument(
         "pdf_path",
@@ -92,13 +93,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     ingest.add_argument(
         "--gemini-binary",
-        default="gemini",
-        help="Gemini CLI executable name or path (default: gemini)",
+        default=DEFAULT_AGENT_BINARY,
+        help="Antigravity CLI (agy) or legacy Gemini CLI executable (default: agy)",
     )
     ingest.add_argument(
         "--model",
         default="flash",
-        help="Gemini CLI model alias or id (default: flash)",
+        help="Agent CLI model alias or id (default: flash)",
     )
     ingest.set_defaults(func=_run_resume_ingest)
 
@@ -210,13 +211,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     filtering.add_argument(
         "--gemini-binary",
-        default="gemini",
-        help="Gemini CLI executable name or path (default: gemini)",
+        default=DEFAULT_AGENT_BINARY,
+        help="Antigravity CLI (agy) or legacy Gemini CLI executable (default: agy)",
     )
     filtering.add_argument(
         "--model",
         default="flash",
-        help="Gemini CLI model alias or id (default: flash)",
+        help="Agent CLI model alias or id (default: flash)",
     )
     filtering.add_argument(
         "--max-description-chars",
@@ -227,7 +228,7 @@ def main(argv: list[str] | None = None) -> int:
     filtering.add_argument(
         "--debug",
         action="store_true",
-        help="Print per-job fetch and Gemini diagnostics to stderr",
+        help="Print per-job fetch and agent CLI diagnostics to stderr",
     )
     filtering.set_defaults(func=_run_jobs_filter)
 
@@ -278,18 +279,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     cv_generate.add_argument(
         "--gemini-binary",
-        default="gemini",
-        help="Gemini CLI executable name or path (default: gemini)",
+        default=DEFAULT_AGENT_BINARY,
+        help="Antigravity CLI (agy) or legacy Gemini CLI executable (default: agy)",
     )
     cv_generate.add_argument(
         "--model",
         default="flash",
-        help="Gemini CLI model alias or id (default: flash)",
+        help="Agent CLI model alias or id (default: flash)",
     )
     cv_generate.add_argument(
         "--debug",
         action="store_true",
-        help="Print Gemini diagnostics to stderr",
+        help="Print agent CLI diagnostics to stderr",
     )
     cv_generate.add_argument(
         "--pdflatex",

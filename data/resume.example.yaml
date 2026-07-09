@@ -67,5 +67,5 @@ accomplishments:
   date: "2024"  # Year or date string
 
 metadata:
-  parsed_by: antigravity-cli-agent  # Set by resume:ingest
+  parsed_by: cursor-agent  # Set by resume:ingest
   source_file: /path/to/resume.pdf  # Source PDF path from last ingest

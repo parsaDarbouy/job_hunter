@@ -9,7 +9,7 @@ A short guide to the commands. For setup details and how the project is organize
 3. Use AI to score new listings against your resume and role preferences (`filtered_jobs_*.csv`).
 4. Build a tailored PDF resume for a specific job posting (`cv:generate`).
 
-You need **Python 3.11+**, **Antigravity CLI** (`agy`), and for PDF resumes **Tectonic** or **pdflatex** (see README).
+You need **Python 3.11+**, a **Cursor API key** (`CURSOR_API_KEY`), and for PDF resumes **Tectonic** or **pdflatex** (see README).
 
 ## One-time setup
 
@@ -18,8 +18,7 @@ cd job_hunter
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-curl -fsSL https://antigravity.google/cli/install.sh | bash
-agy   # first run: sign in with Google OAuth in the browser
+export CURSOR_API_KEY="cursor_..."   # from Cursor Dashboard → Integrations
 ```
 
 Copy and edit your search config:
@@ -74,7 +73,7 @@ job-hunter resume:ingest ./resume.pdf
 | `-o`, `--output` | Where to save YAML (default: `data/resume.yaml`). |
 | `--debug` | Extra diagnostics on stderr; still prints the output path. |
 | `--model` | Agent model (default: `flash`). |
-| `--gemini-binary` | Antigravity CLI (`agy`) or legacy `gemini` executable (default: `agy`). |
+| `--gemini-binary` | AI backend: `cursor` (default), `agy`, or legacy `gemini`. |
 
 **Tip:** Re-running updates the YAML from the PDF. Fields you add by hand at the top of `resume.yaml` (like `target_job_url` for CV generation) are kept when you ingest again.
 
@@ -121,7 +120,7 @@ job-hunter jobs:filter --date 2026-05-21
 | `--position` | Criteria YAML (default: `data/position.yaml`). |
 | `--output` | Filtered CSV path (default: `data/filtered_jobs_YYYY-MM-DD.csv`). |
 | `--model` | Agent model (default: `flash`). |
-| `--gemini-binary` | Antigravity CLI (`agy`) or legacy `gemini` executable (default: `agy`). |
+| `--gemini-binary` | AI backend: `cursor` (default), `agy`, or legacy `gemini`. |
 | `--max-description-chars` | Max characters of job text sent to AI per job (default: 30000). |
 | `--debug` | Per-job details and progress on stderr. |
 
@@ -156,7 +155,7 @@ job-hunter cv:generate
 | `--template` | LaTeX template folder (default: `data/cv_template`). |
 | `--output-dir` | Where PDFs are saved (default: `data/cv`). |
 | `--model` | Agent model (default: `flash`). |
-| `--gemini-binary` | Antigravity CLI (`agy`) or legacy `gemini` executable (default: `agy`). |
+| `--gemini-binary` | AI backend: `cursor` (default), `agy`, or legacy `gemini`. |
 | `--latex-engine` | `tectonic` or `pdflatex` (auto-picks if omitted). |
 | `--pdflatex` | Explicit path to `pdflatex`. |
 | `--debug` | Extra logs on stderr. |

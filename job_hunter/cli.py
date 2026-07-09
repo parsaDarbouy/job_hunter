@@ -72,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
 
     ingest = subparsers.add_parser(
         "resume:ingest",
-        help="Extract a PDF resume via Antigravity CLI and write resume.yaml",
+        help="Extract a PDF resume via Cursor (default) and write resume.yaml",
     )
     ingest.add_argument(
         "pdf_path",
@@ -94,12 +94,12 @@ def main(argv: list[str] | None = None) -> int:
     ingest.add_argument(
         "--gemini-binary",
         default=DEFAULT_AGENT_BINARY,
-        help="Antigravity CLI (agy) or legacy Gemini CLI executable (default: agy)",
+        help="AI backend: cursor (default), agy, or legacy gemini executable",
     )
     ingest.add_argument(
         "--model",
         default="flash",
-        help="Agent CLI model alias or id (default: flash)",
+        help="AI model alias or id (default: flash; maps to composer-2.5 for Cursor)",
     )
     ingest.set_defaults(func=_run_resume_ingest)
 
@@ -212,12 +212,12 @@ def main(argv: list[str] | None = None) -> int:
     filtering.add_argument(
         "--gemini-binary",
         default=DEFAULT_AGENT_BINARY,
-        help="Antigravity CLI (agy) or legacy Gemini CLI executable (default: agy)",
+        help="AI backend: cursor (default), agy, or legacy gemini executable",
     )
     filtering.add_argument(
         "--model",
         default="flash",
-        help="Agent CLI model alias or id (default: flash)",
+        help="AI model alias or id (default: flash; maps to composer-2.5 for Cursor)",
     )
     filtering.add_argument(
         "--max-description-chars",
@@ -280,12 +280,12 @@ def main(argv: list[str] | None = None) -> int:
     cv_generate.add_argument(
         "--gemini-binary",
         default=DEFAULT_AGENT_BINARY,
-        help="Antigravity CLI (agy) or legacy Gemini CLI executable (default: agy)",
+        help="AI backend: cursor (default), agy, or legacy gemini executable",
     )
     cv_generate.add_argument(
         "--model",
         default="flash",
-        help="Agent CLI model alias or id (default: flash)",
+        help="AI model alias or id (default: flash; maps to composer-2.5 for Cursor)",
     )
     cv_generate.add_argument(
         "--debug",

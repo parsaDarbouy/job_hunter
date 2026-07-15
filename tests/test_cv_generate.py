@@ -108,7 +108,7 @@ def test_write_resume_yaml_preserves_cv_settings(tmp_path: Path) -> None:
 def test_slugify_filename_part() -> None:
     assert slugify_filename_part("Acme Corp!") == "Acme_Corp"
     assert build_cv_pdf_filename(company_name="Acme Corp", position_title="SRE / Platform") == (
-        "Acme_Corp_SRE_Platform.pdf"
+        Path("Acme_Corp") / "SRE_Platform" / "CV.pdf"
     )
 
 
@@ -286,7 +286,9 @@ def test_run_cv_generate_end_to_end_mocked(tmp_path: Path) -> None:
             assess_ats=fake_assess_ats,
         )
 
-    assert pdf_path.name == "Acme_Corp_Site_Reliability_Engineer.pdf"
+    assert pdf_path.name == "CV.pdf"
+    assert pdf_path.parent.name == "Site_Reliability_Engineer"
+    assert pdf_path.parent.parent.name == "Acme_Corp"
     assert pdf_path.is_file()
     assert description_path.read_text(encoding="utf-8") == "Build reliable systems."
 

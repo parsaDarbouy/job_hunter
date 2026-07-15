@@ -171,7 +171,7 @@ job-hunter cv:generate
 | `data/resume.yaml` | Your structured resume; add `target_job_url` for CV generation. |
 | `data/jobs_export.csv` | All matching listings the tool has collected. |
 | `data/filtered_jobs_YYYY-MM-DD.csv` | AI-approved jobs for that add date. |
-| `data/cv/*.pdf` | Generated tailored resumes. |
+| `data/cv/{company}/{position}/CV.pdf` | Generated tailored resumes. |
 
 Generated files under `data/` are usually gitignored; keep your own copies safe.
 

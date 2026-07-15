@@ -160,9 +160,9 @@ python3 -m job_hunter cv:generate
 python3 -m job_hunter cv:generate --resume ./data/resume.yaml --debug --model flash
 ```
 
-**Flow:** fetch job description → `data/cv/job_description.txt`; copy `data/cv_template/` → `data/.cv_template/` (working tree for AI edits); Gemini tailors section files; compile `resume.tex`; write `data/cv/{companyName}_{position}.pdf`.
+**Flow:** fetch job description → `data/cv/job_description.txt`; copy `data/cv_template/` → `data/.cv_template/` (working tree for AI edits); Gemini tailors section files; compile `resume.tex`; write `data/cv/{company}/{position}/CV.pdf`.
 
-**Header role (`\def\role{...}` in `resume.tex`):** Gemini sets a short main role (e.g. SRE, DevOps Engineer, Cloud Engineer), not the full posting title—no seniority prefix and no team or specialty suffix (e.g. not “Senior Software Engineer - Engineering Workflow and CI”). The full `position_title` from the job ad is still used for the output PDF filename.
+**Header role (`\def\role{...}` in `resume.tex`):** Gemini sets a short main role (e.g. SRE, DevOps Engineer, Cloud Engineer), not the full posting title—no seniority prefix and no team or specialty suffix (e.g. not “Senior Software Engineer - Engineering Workflow and CI”). The full `company_name` and `position_title` from the job ad are used for the output directory path.
 
 **Stdout:** absolute path to the generated PDF.
 
@@ -189,7 +189,7 @@ See `.gemini/commands/cv-generate.toml` (import with `agy plugin import gemini`)
 | `data/` | Default directory for CLI-generated files (gitignored contents; see `data/.gitkeep`). Tracked templates: `data/position.example.yaml`, `data/weblist.example.yaml`, `data/cv_template/`. Generated: `data/query.yaml`, `data/jobs_export.csv`, `data/resume.yaml`, `data/.cv_template/`, `data/cv/`, etc. |
 | `data/cv_template/` | Tracked LaTeX CV template (`resume.tex`, `sections/`, `TLCresume.sty`; example profile only) |
 | `data/.cv_template/` | Gitignored working copy edited by Gemini before each compile |
-| `data/cv/` | Gitignored tailored PDFs and `job_description.txt` |
+| `data/cv/` | Gitignored tailored PDFs (`{company}/{position}/CV.pdf`) and `job_description.txt` |
 | `job_hunter/agent_cli.py` | Shared headless runner for Cursor SDK (default), Antigravity CLI (`agy`), and legacy Gemini CLI |
 | `job_hunter/cli.py` | CLI entry (`resume:ingest`, `listings:export`, `jobs:filter`, `cv:generate`) |
 | `job_hunter/paths.py` | Shared default paths (`DATA_DIRECTORY`, default resume / weblist / position / query / CSV paths) |

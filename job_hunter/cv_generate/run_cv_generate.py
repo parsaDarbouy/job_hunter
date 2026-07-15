@@ -203,12 +203,12 @@ def run_cv_generate(
         pdflatex_path=pdflatex_path,
         latex_engine=latex_engine,
     )
-    pdf_output_dir.mkdir(parents=True, exist_ok=True)
-    output_name = build_cv_pdf_filename(
+    relative_pdf_path = build_cv_pdf_filename(
         company_name=tailor_result.company_name,
         position_title=tailor_result.position_title,
     )
-    destination = pdf_output_dir / output_name
+    destination = pdf_output_dir / relative_pdf_path
+    destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(built_pdf, destination)
 
     # After generating the tailored CV, run an ATS-style comparison of the

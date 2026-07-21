@@ -1,0 +1,13 @@
+# Fully remote employers from Levels.fyi’s remote-policy list (https://www.levels.fyi/remote/).
+# Organization slugs verified via Ashby public job-board API.
+# Each company appears in at most one ``*.levels_remote.yaml`` registry file.
+
+organization_slugs:
+  - akasa
+  - betterup
+  - chief
+  - mural
+  - primer
+  - quora
+  - recharge
+  - xero

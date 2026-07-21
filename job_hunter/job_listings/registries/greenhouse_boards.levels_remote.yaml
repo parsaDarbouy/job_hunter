@@ -1,0 +1,34 @@
+# Fully remote employers from Levels.fyi’s remote-policy list (https://www.levels.fyi/remote/).
+# Board tokens verified via Greenhouse public jobs JSON (``boards-api.greenhouse.io``).
+# Each company appears in at most one ``*.levels_remote.yaml`` registry file.
+# Only companies not already covered by other registry packs are included.
+
+board_tokens:
+  - airbnb
+  - attentive
+  - boxinc
+  - careem
+  - cribl
+  - degreed
+  - fastly
+  - form3
+  - geotab
+  - godaddy
+  - goguardian
+  - gradle
+  - grafanalabs
+  - groupon
+  - mark43
+  - medium
+  - octopusdeploy
+  - oscar
+  - outschool
+  - postscript
+  - relativity
+  - samsara
+  - sisense
+  - stackexchange
+  - tanium
+  - upwork
+  - veracode
+  - wikimedia

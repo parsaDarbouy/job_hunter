@@ -1,0 +1,9 @@
+# Fully remote employers from Levels.fyi’s remote-policy list (https://www.levels.fyi/remote/).
+# Site slugs verified via Lever public postings JSON (``api.lever.co/v0/postings/{slug}``).
+# Each company appears in at most one ``*.levels_remote.yaml`` registry file.
+
+site_slugs:
+  - angellist
+  - blablacar
+  - ciandt
+  - sophos

@@ -123,6 +123,23 @@ sources:
     kind: custom_career_page
     careers_pages_registry: package:career_pages.fintech.yaml
 
+  # Levels.fyi Fully Remote employers not already in other packs (``*.levels_remote.yaml``).
+  - id: greenhouse_levels_remote
+    kind: greenhouse
+    board_tokens_registry: package:greenhouse_boards.levels_remote.yaml
+
+  - id: ashby_levels_remote
+    kind: ashby
+    organization_slugs_registry: package:ashby_organization_slugs.levels_remote.yaml
+
+  - id: lever_levels_remote
+    kind: lever
+    site_slugs_registry: package:lever_site_slugs.levels_remote.yaml
+
+  - id: custom_career_levels_remote
+    kind: custom_career_page
+    careers_pages_registry: package:career_pages.levels_remote.yaml
+
   # Inline extras (merged with their own ids if you prefer single-board rows):
   # - id: greenhouse_extra
   #   kind: greenhouse

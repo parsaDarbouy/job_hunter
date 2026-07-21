@@ -1,0 +1,125 @@
+# Fully remote employers from Levels.fyi’s remote-policy list without a probed public
+# Greenhouse / Ashby / Lever / Workable JSON board. Careers URLs for ``query.yaml`` tracking
+# only (no automated HTML scrape yet). Complements API-backed ``*.levels_remote.yaml`` rows.
+
+careers_pages:
+  - url: https://adhocteam.us/careers/
+    display_name: Ad Hoc Careers
+  - url: https://www.alkami.com/company/careers
+    display_name: Alkami Careers
+  - url: https://articulate.com/careers
+    display_name: Articulate Careers
+  - url: https://www.athenahealth.com/careers
+    display_name: Athenahealth Careers
+  - url: https://www.audible.careers/
+    display_name: Audible Careers
+  - url: https://www.bairesdev.com/careers/
+    display_name: BairesDev Careers
+  - url: https://www.bettercloud.com/company/careers
+    display_name: BetterCloud Careers
+  - url: https://www.teamblind.com/careers
+    display_name: Blind Careers
+  - url: https://www.bolt.com/careers
+    display_name: Bolt Careers
+  - url: https://www.chargebee.com/careers/
+    display_name: Chargebee Careers
+  - url: https://careers.chewy.com/
+    display_name: Chewy Careers
+  - url: https://www.citadel.com/careers/
+    display_name: Citadel Careers
+  - url: https://www.coursehero.com/about/careers/
+    display_name: Course Hero Careers
+  - url: https://www.datarobot.com/careers/
+    display_name: DataRobot Careers
+  - url: https://jobs.dell.com/
+    display_name: Dell Technologies Careers
+  - url: https://www.joindrop.com/careers
+    display_name: Drop Careers
+  - url: https://www.embark-studios.com/jobs
+    display_name: Embark Studios Careers
+  - url: https://www.equipmentshare.com/careers
+    display_name: EquipmentShare Careers
+  - url: https://careers.etsy.com/
+    display_name: Etsy Careers
+  - url: https://formidable.com/careers/
+    display_name: Formidable Careers
+  - url: https://www.gett.com/careers/
+    display_name: Gett Careers
+  - url: https://www.github.careers/careers-home
+    display_name: GitHub Careers
+  - url: https://www.glassdoor.com/about/careers.htm
+    display_name: Glassdoor Careers
+  - url: https://www.globant.com/careers
+    display_name: Globant Careers
+  - url: https://www.goto.com/careers
+    display_name: GoTo Careers
+  - url: https://www.hulu.com/jobs
+    display_name: Hulu Careers
+  - url: https://www.indeed.com/cmp/Indeed/jobs
+    display_name: Indeed Careers
+  - url: https://ironcladapp.com/careers/
+    display_name: Ironclad Careers
+  - url: https://nacelle.com/careers
+    display_name: Nacelle Careers
+  - url: https://www.noom.com/careers/
+    display_name: Noom Careers
+  - url: https://www.paychex.com/careers
+    display_name: Paychex Careers
+  - url: https://www.phreesia.com/careers/
+    display_name: Phreesia Careers
+  - url: https://www.redhat.com/en/jobs
+    display_name: Red Hat Careers
+  - url: https://www.skillshare.com/careers
+    display_name: Skillshare Careers
+  - url: https://www.slalom.com/careers
+    display_name: Slalom Careers
+  - url: https://sourcegraph.com/careers
+    display_name: Sourcegraph Careers
+  - url: https://www.splunk.com/en_us/careers.html
+    display_name: Splunk Careers
+  - url: https://www.strongdm.com/careers
+    display_name: strongDM Careers
+  - url: https://www.goswift.ly/careers
+    display_name: Swiftly Careers
+  - url: https://www.ukg.com/careers
+    display_name: UKG Careers
+  - url: https://www.usertesting.com/about-us/careers
+    display_name: UserTesting Careers
+  - url: https://www.verisk.com/careers/
+    display_name: Verisk Careers
+  - url: https://careers.vmware.com/
+    display_name: VMware Careers
+  - url: https://voltrondata.com/careers
+    display_name: Voltron Data Careers
+  - url: https://www.wework.com/careers
+    display_name: WeWork Careers
+  - url: https://www.yelp.careers/us/en
+    display_name: Yelp Careers
+  - url: https://www.zillow.com/careers/
+    display_name: Zillow Careers
+  - url: https://careers.zoom.us/
+    display_name: Zoom Careers
+  - url: https://rebelliondefense.com/careers
+    display_name: Rebellion Defense Careers
+  - url: https://www.truecar.com/careers/
+    display_name: TrueCar Careers
+  - url: https://www.tylertech.com/careers
+    display_name: Tyler Technologies Careers
+  - url: https://www.nationwide.com/personal/about-us/careers/
+    display_name: Nationwide Careers
+  - url: https://www.trendmicro.com/en_us/about/careers.html
+    display_name: Trend Micro Careers
+  - url: https://www.thehartford.com/careers
+    display_name: The Hartford Careers
+  - url: https://www.lamresearch.com/careers/
+    display_name: Lam Research Careers
+  - url: https://www.nwea.org/careers/
+    display_name: NWEA Careers
+  - url: https://www.gravyanalytics.com/careers
+    display_name: Gravy Analytics Careers
+  - url: https://www.redargyle.com/careers
+    display_name: Red Argyle Careers
+  - url: https://www.wildlight.com/careers
+    display_name: Wildlight Entertainment Careers
+  - url: https://www.smsassist.com/careers/
+    display_name: SMS Assist Careers

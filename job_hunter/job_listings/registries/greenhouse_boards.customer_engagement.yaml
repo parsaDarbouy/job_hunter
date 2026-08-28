@@ -1,0 +1,32 @@
+# Customer engagement / CEP / CDP / messaging employers (Braze category).
+# Board tokens verified via Greenhouse public jobs JSON (``boards-api.greenhouse.io``).
+# Each company appears in at most one ``*.customer_engagement.yaml`` registry file.
+
+board_tokens:
+  - airship
+  - amplitude
+  - appsflyer
+  - attentive
+  - bandwidth
+  - bird
+  - bloomreach
+  - blueconic
+  - blueshift
+  - braze
+  - branch
+  - customerio
+  - hightouch
+  - hubspot
+  - insider
+  - intercom
+  - iterable
+  - klaviyo
+  - launchdarkly
+  - mixpanel
+  - pendo
+  - postscript
+  - pubnub
+  - sendbird
+  - twilio
+  - vonage
+  - yotpo

@@ -1,0 +1,69 @@
+# Customer engagement / CEP / CDP / messaging employers; careers pages for ``query.yaml``
+# tracking only (no automated HTML scrape yet). Complements API-backed
+# ``*.customer_engagement.yaml`` rows without duplicating those ATS entries.
+
+careers_pages:
+  - url: https://ably.com/careers
+    display_name: Ably Careers
+  - url: https://www.actioniq.com/careers
+    display_name: ActionIQ Careers
+  - url: https://www.adjust.com/company/careers/
+    display_name: Adjust Careers
+  - url: https://www.appcues.com/careers
+    display_name: Appcues Careers
+  - url: https://www.brevo.com/careers/
+    display_name: Brevo Careers
+  - url: https://www.getcensus.com/careers
+    display_name: Census Careers
+  - url: https://www.chameleon.io/jobs
+    display_name: Chameleon Jobs
+  - url: https://cordial.com/careers
+    display_name: Cordial Careers
+  - url: https://www.courier.com/careers
+    display_name: Courier Careers
+  - url: https://www.dynamicyield.com/careers
+    display_name: Dynamic Yield Careers
+  - url: https://www.glassbox.com/careers
+    display_name: Glassbox Careers
+  - url: https://www.heap.io/careers
+    display_name: Heap Careers
+  - url: https://www.infobip.com/careers
+    display_name: Infobip Careers
+  - url: https://www.lytics.com/careers
+    display_name: Lytics Careers
+  - url: https://www.mailjet.com/jobs
+    display_name: Mailjet Jobs
+  - url: https://meetmarigold.com/careers
+    display_name: Marigold Careers
+  - url: https://www.mparticle.com/careers/
+    display_name: mParticle Careers
+  - url: https://novu.co/careers
+    display_name: Novu Careers
+  - url: https://onesignal.com/careers
+    display_name: OneSignal Careers
+  - url: https://www.optimizely.com/careers/
+    display_name: Optimizely Careers
+  - url: https://www.plotline.so/careers
+    display_name: Plotline Careers
+  - url: https://pusher.com/careers
+    display_name: Pusher Careers
+  - url: https://www.rudderstack.com/careers
+    display_name: RudderStack Careers
+  - url: https://www.sinch.com/careers/
+    display_name: Sinch Careers
+  - url: https://tealium.com/company/careers/
+    display_name: Tealium Careers
+  - url: https://telnyx.com/careers
+    display_name: Telnyx Careers
+  - url: https://www.totango.com/careers
+    display_name: Totango Careers
+  - url: https://www.treasuredata.com/careers/
+    display_name: Treasure Data Careers
+  - url: https://www.getvero.com/careers
+    display_name: Vero Careers
+  - url: https://vwo.com/careers/
+    display_name: VWO Careers
+  - url: https://webengage.com/careers/
+    display_name: WebEngage Careers
+  - url: https://whatfix.com/careers/
+    display_name: Whatfix Careers

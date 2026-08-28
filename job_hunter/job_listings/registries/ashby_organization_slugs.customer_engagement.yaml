@@ -1,0 +1,13 @@
+# Customer engagement / CEP / CDP / messaging employers (Braze category).
+# Organization slugs verified via Ashby public posting API (``api.ashbyhq.com``).
+# Each company appears in at most one ``*.customer_engagement.yaml`` registry file.
+
+organization_slugs:
+  - Stream
+  - fullstory
+  - gainsight
+  - knock
+  - posthog
+  - simondata
+  - singular
+  - sprig

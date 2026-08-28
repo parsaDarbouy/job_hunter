@@ -1,0 +1,9 @@
+# Customer engagement / CEP / messaging employers (Braze category).
+# Apply account slugs verified via Workable widget API (``apply.workable.com/api/v1/widget/accounts/{slug}``).
+# Each company appears in at most one ``*.customer_engagement.yaml`` registry file.
+
+apply_account_slugs:
+  - clevertap
+  - hotjar
+  - mailgun
+  - moengage

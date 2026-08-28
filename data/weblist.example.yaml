@@ -123,6 +123,27 @@ sources:
     kind: custom_career_page
     careers_pages_registry: package:career_pages.fintech.yaml
 
+  # Customer engagement / CEP / CDP / messaging employers (``*.customer_engagement.yaml``).
+  - id: greenhouse_customer_engagement
+    kind: greenhouse
+    board_tokens_registry: package:greenhouse_boards.customer_engagement.yaml
+
+  - id: ashby_customer_engagement
+    kind: ashby
+    organization_slugs_registry: package:ashby_organization_slugs.customer_engagement.yaml
+
+  - id: workable_customer_engagement
+    kind: workable
+    apply_account_slugs_registry: package:workable_apply_slugs.customer_engagement.yaml
+
+  - id: lever_customer_engagement
+    kind: lever
+    site_slugs_registry: package:lever_site_slugs.customer_engagement.yaml
+
+  - id: custom_career_customer_engagement
+    kind: custom_career_page
+    careers_pages_registry: package:career_pages.customer_engagement.yaml
+
   # Levels.fyi Fully Remote employers not already in other packs (``*.levels_remote.yaml``).
   - id: greenhouse_levels_remote
     kind: greenhouse

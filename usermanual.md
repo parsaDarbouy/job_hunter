@@ -8,6 +8,7 @@ A short guide to the commands. For setup details and how the project is organize
 2. Pull job listings from boards you configure, keep ones that match your criteria, and save them to a spreadsheet (`jobs_export.csv`).
 3. Use AI to score new listings against your resume and role preferences (`filtered_jobs_*.csv`).
 4. Build a tailored PDF resume for a specific job posting (`cv:generate`).
+5. Look up public recruiter and hiring-manager contacts for that posting (`contacts:lookup`, also runs after `cv:generate` unless you skip it).
 
 You need **Python 3.11+**, a **Cursor API key** (`CURSOR_API_KEY`), and for PDF resumes **Tectonic** or **pdflatex** (see README).
 
@@ -53,6 +54,7 @@ job-hunter jobs:filter --date 2026-05-21
 
 # 4. Optional: tailored CV for one job (set target_job_url in resume.yaml first)
 job-hunter cv:generate
+#    Also writes contacts.yaml next to CV.pdf unless you pass --skip-contacts
 ```
 
 Run `listings:export` regularly (e.g. daily). Run `jobs:filter` with the **same date** as `added_to_list_date` for the rows you want scored that day.
@@ -159,6 +161,31 @@ job-hunter cv:generate
 | `--latex-engine` | `tectonic` or `pdflatex` (auto-picks if omitted). |
 | `--pdflatex` | Explicit path to `pdflatex`. |
 | `--debug` | Extra logs on stderr. |
+| `--skip-contacts` | Do not look up recruiter/hiring-manager contacts after the PDF is written. |
+
+---
+
+## `contacts:lookup`
+
+**Purpose:** Find public recruiter and hiring-manager contacts for a job URL. Most of the work is ordinary HTTP (ATS JSON, posting HTML, DuckDuckGo, LinkedIn guest job cards). The model only plans search queries and pulls names from those snippets.
+
+```bash
+job-hunter contacts:lookup --job-url "https://…"
+job-hunter contacts:lookup --resume ./data/resume.yaml
+```
+
+When `--job-url` is omitted, the command uses `target_job_url` from the resume YAML.
+
+| Option | What it does |
+|--------|----------------|
+| `--job-url` | Job posting URL. |
+| `--resume` | Resume YAML used when `--job-url` is omitted (default: `data/resume.yaml`). |
+| `--output` | YAML path (default: `data/cv/{company}/{position}/contacts.yaml`). |
+| `--model` | Agent model (default: `flash`). |
+| `--gemini-binary` | AI backend: `cursor` (default), `agy`, or legacy `gemini`. |
+| `--debug` | Extra logs on stderr. |
+
+**Stdout:** path to `contacts.yaml`. After `cv:generate`, that file is written next to `CV.pdf`. Results are a shortlist with confidence and evidence, not a guaranteed ATS owner field.
 
 ---
 
@@ -172,6 +199,7 @@ job-hunter cv:generate
 | `data/jobs_export.csv` | All matching listings the tool has collected. |
 | `data/filtered_jobs_YYYY-MM-DD.csv` | AI-approved jobs for that add date. |
 | `data/cv/{company}/{position}/CV.pdf` | Generated tailored resumes. |
+| `data/cv/{company}/{position}/contacts.yaml` | Public recruiter / hiring-manager shortlist for that role. |
 
 Generated files under `data/` are usually gitignored; keep your own copies safe.
 
@@ -185,4 +213,5 @@ job-hunter resume:ingest --help
 job-hunter listings:export --help
 job-hunter jobs:filter --help
 job-hunter cv:generate --help
+job-hunter contacts:lookup --help
 ```

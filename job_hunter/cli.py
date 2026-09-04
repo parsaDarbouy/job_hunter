@@ -252,6 +252,19 @@ def main(argv: list[str] | None = None) -> int:
             pdflatex_path=arguments.pdflatex,
             latex_engine=arguments.latex_engine,
         )
+        if not getattr(arguments, "skip_contacts", False):
+            from job_hunter.role_contacts.run_lookup import run_lookup_after_cv_generate
+
+            try:
+                run_lookup_after_cv_generate(
+                    pdf_path=pdf_path,
+                    resume_path=arguments.resume,
+                    gemini_binary=arguments.gemini_binary,
+                    model=arguments.model,
+                    debug=arguments.debug,
+                )
+            except Exception as exc:
+                logging.warning("role_contacts.lookup_failed error=%s", exc)
         print(pdf_path)
         return 0
 
@@ -304,7 +317,83 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="LaTeX engine (default: pdflatex if found, else tectonic)",
     )
+    cv_generate.add_argument(
+        "--skip-contacts",
+        action="store_true",
+        help="Skip recruiter/hiring-manager lookup after the PDF is written",
+    )
     cv_generate.set_defaults(func=_run_cv_generate)
+
+    def _run_contacts_lookup(arguments: argparse.Namespace) -> int:
+        import yaml
+
+        from job_hunter.resume_ingest.resume_settings import parse_target_job_url
+        from job_hunter.role_contacts.run_lookup import run_role_contact_lookup
+
+        logging.basicConfig(
+            level=logging.DEBUG if arguments.debug else logging.INFO,
+            format="%(levelname)s %(message)s",
+            stream=sys.stderr,
+            force=True,
+        )
+
+        job_url = str(arguments.job_url or "").strip()
+        if not job_url:
+            resume_file = arguments.resume.expanduser().resolve()
+            if not resume_file.is_file():
+                raise FileNotFoundError(f"Resume YAML not found: {resume_file}")
+            document = yaml.safe_load(resume_file.read_text(encoding="utf-8"))
+            if not isinstance(document, dict):
+                raise ValueError(f"Resume YAML must be a mapping: {resume_file}")
+            job_url = parse_target_job_url(document)
+
+        contacts_path = run_role_contact_lookup(
+            job_url=job_url,
+            output_path=arguments.output,
+            gemini_binary=arguments.gemini_binary,
+            model=arguments.model,
+            debug=arguments.debug,
+        )
+        print(contacts_path)
+        return 0
+
+    contacts = subparsers.add_parser(
+        "contacts:lookup",
+        help="Find public recruiter and hiring-manager contacts for a job URL",
+    )
+    contacts.add_argument(
+        "--job-url",
+        default="",
+        help="Job posting URL (default: target_job_url from --resume)",
+    )
+    contacts.add_argument(
+        "--resume",
+        type=Path,
+        default=default_resume_yaml_path(),
+        help=f"Resume YAML used when --job-url is omitted (default: {default_resume_yaml_path()})",
+    )
+    contacts.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Output YAML path (default: data/cv/{company}/{position}/contacts.yaml)",
+    )
+    contacts.add_argument(
+        "--gemini-binary",
+        default=DEFAULT_AGENT_BINARY,
+        help="AI backend: cursor (default), agy, or legacy gemini executable",
+    )
+    contacts.add_argument(
+        "--model",
+        default="flash",
+        help="AI model alias or id (default: flash; maps to composer-2.5 for Cursor)",
+    )
+    contacts.add_argument(
+        "--debug",
+        action="store_true",
+        help="Print agent CLI diagnostics to stderr",
+    )
+    contacts.set_defaults(func=_run_contacts_lookup)
 
     namespace = parser.parse_args(argv)
     handler = getattr(namespace, "func", None)

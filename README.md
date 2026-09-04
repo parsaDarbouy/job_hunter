@@ -2,7 +2,7 @@
 
 **New here?** See **[usermanual.md](usermanual.md)** for a simple guide to every command and option.
 
-Agentic job-hunting utilities. **Resume ingestion** turns a PDF resume into a normalized `resume.yaml`. **Listing export** reads `weblist.yaml` (job board sources) plus `position.yaml` (your filters), writes a machine-readable `query.yaml` plan (fetch URLs and title-matching matrix), pulls public listings where supported, filters rows against your position criteria, and merges matches into `jobs_export.csv` (new URLs only when the file already exists). **AI job filtering** uses the Cursor SDK (default) to review jobs added on a specific date against `resume.yaml` and `position.yaml`, then writes a filtered CSV. **CV generation** tailors a LaTeX resume from `resume.yaml` and a job posting URL, then compiles an ATS-friendly PDF.
+Agentic job-hunting utilities. **Resume ingestion** turns a PDF resume into a normalized `resume.yaml`. **Listing export** reads `weblist.yaml` (job board sources) plus `position.yaml` (your filters), writes a machine-readable `query.yaml` plan (fetch URLs and title-matching matrix), pulls public listings where supported, filters rows against your position criteria, and merges matches into `jobs_export.csv` (new URLs only when the file already exists). **AI job filtering** uses the Cursor SDK (default) to review jobs added on a specific date against `resume.yaml` and `position.yaml`, then writes a filtered CSV. **CV generation** tailors a LaTeX resume from `resume.yaml` and a job posting URL, then compiles an ATS-friendly PDF. **Role-contact lookup** finds public recruiter and hiring-manager names for a posting (HTTP and ATS parsing in Python; a short model pass to plan searches and extract names from snippets) and writes `contacts.yaml`.
 
 Copy `data/position.example.yaml` → `data/position.yaml` and `data/weblist.example.yaml` → `data/weblist.yaml`, then edit boards, titles, and geography to match your search.
 
@@ -158,6 +158,7 @@ Run:
 ```bash
 python3 -m job_hunter cv:generate
 python3 -m job_hunter cv:generate --resume ./data/resume.yaml --debug --model flash
+python3 -m job_hunter cv:generate --skip-contacts
 ```
 
 **Flow:** fetch job description → `data/cv/job_description.txt`; copy `data/cv_template/` → `data/.cv_template/` (working tree for AI edits); Gemini tailors section files; compile `resume.tex`; write `data/cv/{company}/{position}/CV.pdf`.
@@ -166,7 +167,7 @@ python3 -m job_hunter cv:generate --resume ./data/resume.yaml --debug --model fl
 
 **Stdout:** absolute path to the generated PDF.
 
-**Stderr:** includes structured `INFO` logs plus a short ATS report block (score and missing keywords) printed after the PDF is generated.
+**Stderr:** includes structured `INFO` logs plus a short ATS report block (score and missing keywords) printed after the PDF is generated. After that, `cv:generate` runs **role-contact lookup** for `target_job_url` (same as `contacts:lookup`) unless you pass `--skip-contacts`. Lookup failures are logged and do not fail CV generation. CV tailoring, layout validation, and PDF compile are unchanged.
 
 **Anti-hallucination:** the Gemini prompt forbids inventing employers, roles, dates, or skills; Python rejects tailored LaTeX that references employers not listed under `experience` in `resume.yaml`.
 
@@ -182,6 +183,26 @@ python3 -m job_hunter cv:generate --resume ./data/resume.yaml --debug --model fl
 
 See `.gemini/commands/cv-generate.toml` (import with `agy plugin import gemini`).
 
+## Command: `contacts:lookup`
+
+Find public recruiter and hiring-manager contacts for one job posting. Python fetches ATS JSON, posting HTML, DuckDuckGo results, and LinkedIn guest job cards. The model writes search queries and then extracts a shortlist from those snippets (names already in the sources only).
+
+```bash
+python3 -m job_hunter contacts:lookup --job-url "https://boards.greenhouse.io/example/jobs/123"
+python3 -m job_hunter contacts:lookup --resume ./data/resume.yaml
+python3 -m job_hunter cv:generate --skip-contacts
+```
+
+After `pip install -e .`, you can also run `job-hunter contacts:lookup`.
+
+**Stdout:** absolute path to the contacts YAML.
+
+**Default output:** `data/cv/{company}/{position}/contacts.yaml` (same directory layout as `CV.pdf`). After `cv:generate`, the file is written next to that run's PDF.
+
+**YAML fields:** `job_url`, `company_name`, `job_title`, `looked_up_at`, `ai_used`, and `candidates` (`name`, `kind` recruiter / hiring_manager / unknown, `title`, `linkedin_url`, `email`, `confidence` high / medium / low, `evidence`, `source`). Emails are included only when they appeared on the posting; the tool does not guess addresses.
+
+**Stderr:** a short `ROLE CONTACTS` block listing names and LinkedIn URLs. Public ATS APIs and LinkedIn guest pages often omit a named owner, so results are a ranked shortlist with evidence, not a guaranteed Greenhouse job-owner field.
+
 ## Layout
 
 | Path | Role |
@@ -189,9 +210,9 @@ See `.gemini/commands/cv-generate.toml` (import with `agy plugin import gemini`)
 | `data/` | Default directory for CLI-generated files (gitignored contents; see `data/.gitkeep`). Tracked templates: `data/position.example.yaml`, `data/weblist.example.yaml`, `data/cv_template/`. Generated: `data/query.yaml`, `data/jobs_export.csv`, `data/resume.yaml`, `data/.cv_template/`, `data/cv/`, etc. |
 | `data/cv_template/` | Tracked LaTeX CV template (`resume.tex`, `sections/`, `TLCresume.sty`; example profile only) |
 | `data/.cv_template/` | Gitignored working copy edited by Gemini before each compile |
-| `data/cv/` | Gitignored tailored PDFs (`{company}/{position}/CV.pdf`) and `job_description.txt` |
+| `data/cv/` | Gitignored tailored PDFs (`{company}/{position}/CV.pdf`), `contacts.yaml` after lookup, and `job_description.txt` |
 | `job_hunter/agent_cli.py` | Shared headless runner for Cursor SDK (default), Antigravity CLI (`agy`), and legacy Gemini CLI |
-| `job_hunter/cli.py` | CLI entry (`resume:ingest`, `listings:export`, `jobs:filter`, `cv:generate`) |
+| `job_hunter/cli.py` | CLI entry (`resume:ingest`, `listings:export`, `jobs:filter`, `cv:generate`, `contacts:lookup`) |
 | `job_hunter/paths.py` | Shared default paths (`DATA_DIRECTORY`, default resume / weblist / position / query / CSV paths) |
 | `job_hunter/job_listings/` | Listing export: YAML plan, HTTP fetchers, filters, CSV writer |
 | `job_hunter/job_listings/registries/*.yaml` | Bundled example board lists (Greenhouse tokens, Ashby slugs, Workable slugs, Lever site slugs, career URLs) for `package:` weblist references; optional `*.blockchain.yaml`, `*.zapier.yaml`, `*.globally_remote.yaml`, `*.us_hires_canada.yaml`, `*.fintech.yaml`, `*.customer_engagement.yaml`, and `*.levels_remote.yaml` packs. The `*.example.yaml` files include an extension aimed at globally remote-friendly employers (tokens/slugs validated against each vendor’s public listing API). |
@@ -204,6 +225,7 @@ See `.gemini/commands/cv-generate.toml` (import with `agy plugin import gemini`)
 | `job_hunter/resume_ingest/yaml_writer.py` | Canonical YAML serialization |
 | `job_hunter/resume_ingest/resume_settings.py` | `resume_max_pages` / `target_job_url` merge on ingest |
 | `job_hunter/cv_generate/` | CV tailoring: template copy, job fetch, agent LaTeX edits, validation, `pdflatex` |
+| `job_hunter/role_contacts/` | Recruiter / hiring-manager lookup: ATS and HTML extractors, public search, agent query/extract, YAML writer |
 
 `.gitignore` also excludes typical Python noise (extra venv names, mypy/ruff/pytest caches, packaging outputs, coverage, `.env`, `.DS_Store`) and keeps **resume intake private**: `resume.pdf` and `resume.yaml` match in any folder, plus everything under `data/` except `data/.gitkeep`, `data/position.example.yaml`, `data/weblist.example.yaml`, and `data/cv_template/`.
 
@@ -224,3 +246,4 @@ pytest
 - Text-based PDFs only; scanned PDFs need OCR first.
 - Encrypted PDFs are not supported without a password workflow.
 - `cv:generate` requires `pdflatex` and a working LaTeX install; complex template errors may need manual fixes in `data/.cv_template/`.
+- `contacts:lookup` uses public HTML (DuckDuckGo, LinkedIn guest pages). Those sources often omit a named job owner and may return empty results when blocked.

@@ -7,10 +7,12 @@ from unittest.mock import patch
 
 from job_hunter.job_filtering.job_page_text import (
     extract_html_meta_description,
+    fetch_bamboohr_job_description,
     fetch_greenhouse_job_description,
     fetch_job_description,
     fetch_workday_job_description,
     html_to_text,
+    parse_bamboohr_job_reference,
     parse_greenhouse_job_reference,
     parse_workday_job_reference,
 )
@@ -223,3 +225,77 @@ def test_fetch_job_description_falls_back_to_workday_api_when_html_empty() -> No
 
     assert "Platform Engineer" in text
     assert "Workday API description" in text
+
+
+def test_parse_bamboohr_job_reference_from_careers_url() -> None:
+    reference = parse_bamboohr_job_reference(
+        "https://laivly.bamboohr.com/careers/115?source=LinkedIn",
+    )
+    assert reference == ("laivly", "115")
+
+
+def test_parse_bamboohr_job_reference_from_detail_path() -> None:
+    assert parse_bamboohr_job_reference(
+        "https://laivly.bamboohr.com/careers/115/detail",
+    ) == ("laivly", "115")
+
+
+def test_parse_bamboohr_job_reference_returns_none_for_other_hosts() -> None:
+    assert parse_bamboohr_job_reference("https://boards.greenhouse.io/acme/jobs/1") is None
+    assert parse_bamboohr_job_reference("https://laivly.bamboohr.com/careers") is None
+
+
+def test_fetch_bamboohr_job_description_via_detail_json() -> None:
+    payload = {
+        "result": {
+            "jobOpening": {
+                "jobOpeningName": "Senior Cloud Engineer",
+                "departmentLabel": "IT/DevOps/Architecture",
+                "employmentStatusLabel": "Full-Time",
+                "atsLocation": {"city": "Winnipeg", "state": "Manitoba", "country": "Canada"},
+                "description": "<p>Operate <strong>AWS</strong> infrastructure.</p>",
+            },
+        },
+    }
+
+    def fake_urlopen(request, timeout=30):
+        assert request.full_url == "https://laivly.bamboohr.com/careers/115/detail"
+        return _FakeHttpResponse(
+            json.dumps(payload).encode("utf-8"),
+            content_type="application/json",
+        )
+
+    with patch("job_hunter.job_filtering.job_page_text.urllib.request.urlopen", fake_urlopen):
+        text = fetch_bamboohr_job_description("laivly", "115")
+
+    assert "Senior Cloud Engineer" in text
+    assert "Laivly" in text
+    assert "Winnipeg, Manitoba, Canada" in text
+    assert "AWS" in text
+
+
+def test_fetch_job_description_uses_bamboohr_json_instead_of_spa_chrome() -> None:
+    bamboohr_payload = {
+        "result": {
+            "jobOpening": {
+                "jobOpeningName": "Senior Cloud Engineer",
+                "description": "<p>BambooHR API description</p>",
+            },
+        },
+    }
+
+    def fake_urlopen(request, timeout=30):
+        url = request.full_url
+        if url.endswith("/careers/115/detail"):
+            return _FakeHttpResponse(
+                json.dumps(bamboohr_payload).encode("utf-8"),
+                content_type="application/json",
+            )
+        return _FakeHttpResponse(b"<html><body>BambooHR</body></html>")
+
+    with patch("job_hunter.job_filtering.job_page_text.urllib.request.urlopen", fake_urlopen):
+        text = fetch_job_description("https://laivly.bamboohr.com/careers/115")
+
+    assert "Senior Cloud Engineer" in text
+    assert "BambooHR API description" in text
+    assert text != "BambooHR"

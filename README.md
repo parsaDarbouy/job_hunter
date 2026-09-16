@@ -95,7 +95,7 @@ You can merge singles + lists + registry on one row; tokens are de-duplicated. F
 
 ## Command: `jobs:filter`
 
-Review exported jobs with the **Cursor SDK** (default), **Antigravity CLI**, or legacy **Gemini CLI** one by one. The command only evaluates rows where `added_to_list_date` equals the date you pass, so each listing batch can be processed once. If `data/jobs_export.csv` does not yet have the final `job_description` column, or a matching row has an empty value, the command fetches the job URL, extracts readable page text, stores it back in `jobs_export.csv`, and sends that description to Gemini. When HTML body text is empty, it uses Open Graph / meta descriptions when present (common on Workday career SPAs). If still empty, Greenhouse URLs fall back to the public boards API using the job id and an inferred board token from the host (`careers.{token}.com` or `boards.greenhouse.io/{token}/jobs/{id}`). Workday URLs (`*.myworkdayjobs.com`) fall back to the public ``/wday/cxs/`` JSON API.
+Review exported jobs with the **Cursor SDK** (default), **Antigravity CLI**, or legacy **Gemini CLI** one by one. The command only evaluates rows where `added_to_list_date` equals the date you pass, so each listing batch can be processed once. If `data/jobs_export.csv` does not yet have the final `job_description` column, or a matching row has an empty value, the command fetches the job URL, extracts readable page text, stores it back in `jobs_export.csv`, and sends that description to Gemini. When HTML body text is empty, it uses Open Graph / meta descriptions when present (common on Workday career SPAs). If still empty, Greenhouse URLs fall back to the public boards API using the job id and an inferred board token from the host (`careers.{token}.com` or `boards.greenhouse.io/{token}/jobs/{id}`). Workday URLs (`*.myworkdayjobs.com`) fall back to the public ``/wday/cxs/`` JSON API. BambooHR URLs (`{subdomain}.bamboohr.com/careers/{id}`) use the public ``/careers/{id}/detail`` JSON feed first, because the HTML careers page is a SPA that otherwise yields only chrome text such as ``BambooHR``.
 
 Add or edit the threshold in `data/position.yaml`:
 
@@ -131,7 +131,7 @@ python3 -m job_hunter jobs:filter \
 
 ## Command: `cv:generate`
 
-Produce a tailored, ATS-friendly PDF resume from **`resume.yaml`** and the job posting at **`target_job_url`**. Gemini CLI rewrites the LaTeX template (example profile in git; your real data comes from YAML at generation time). Python validates that employers in the tailored text exist in `resume.yaml`, then runs `pdflatex`.
+Produce a tailored, ATS-friendly PDF resume from **`resume.yaml`** and the job posting at **`target_job_url`**. Gemini CLI rewrites the LaTeX template (example profile in git; your real data comes from YAML at generation time). Python validates that employers in the tailored text exist in `resume.yaml`, then runs `pdflatex`. Posting fetch is the same as `jobs:filter` (HTML, plus Greenhouse, Workday, and BambooHR JSON when those URLs apply).
 
 **`data/resume.example.yaml`** documents the resume schema (short comments per field). You need a filled-in **`data/resume.yaml`**—from `resume:ingest` or by copying the example—to run `cv:generate` for a specific job posting (`target_job_url`).
 

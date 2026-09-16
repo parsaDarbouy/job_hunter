@@ -128,13 +128,13 @@ job-hunter jobs:filter --date 2026-05-21
 
 **In `position.yaml`:** set `ai_filtering.minimum_alignment_percentage` (e.g. `70`) — jobs below that score are dropped.
 
-Accepted jobs are written as they pass, so you keep partial results if the run stops early.
+Accepted jobs are written as they pass, so you keep partial results if the run stops early. Posting text comes from the job URL: HTML when the page has a real description, otherwise Greenhouse / Workday JSON, and BambooHR `{company}.bamboohr.com/careers/{id}` uses that site’s public job-detail JSON.
 
 ---
 
 ## `cv:generate`
 
-**Purpose:** Using `data/resume.yaml` and the job URL in `target_job_url`, tailor the LaTeX CV template with AI and compile a PDF under `data/cv/`.
+**Purpose:** Using `data/resume.yaml` and the job URL in `target_job_url`, tailor the LaTeX CV template with AI and compile a PDF under `data/cv/`. BambooHR career URLs (`https://{company}.bamboohr.com/careers/{id}`) are supported the same way as other posting URLs.
 
 **Before you run**, add to the top of `data/resume.yaml` (not filled in by ingest):
 

@@ -16,6 +16,8 @@ _MAX_RESPONSE_BYTES = 2_000_000
 _SKIPPED_TAGS = {"script", "style", "noscript", "svg"}
 _GREENHOUSE_BOARD_HOSTS = frozenset({"boards.greenhouse.io", "job-boards.greenhouse.io"})
 _WORKDAY_JOBS_HOST_SUFFIX = ".myworkdayjobs.com"
+_BAMBOOHR_HOST_SUFFIX = ".bamboohr.com"
+_BAMBOOHR_SUBDOMAIN_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
 _META_DESCRIPTION_KEYS = frozenset(
     {"description", "og:description", "twitter:description"},
 )
@@ -269,6 +271,124 @@ def fetch_workday_job_description(
     return _workday_payload_to_text(payload_data)
 
 
+def parse_bamboohr_job_reference(url: str) -> tuple[str, str] | None:
+    """
+    Return ``(subdomain, job_id)`` for BambooHR career URLs.
+
+    Example::
+      https://laivly.bamboohr.com/careers/115
+      https://laivly.bamboohr.com/careers/115/detail
+    """
+    parsed = urllib.parse.urlparse(url.strip())
+    if not parsed.netloc:
+        return None
+
+    host = parsed.netloc.lower()
+    if host.startswith("www."):
+        host = host[4:]
+    if not host.endswith(_BAMBOOHR_HOST_SUFFIX):
+        return None
+
+    subdomain = host[: -len(_BAMBOOHR_HOST_SUFFIX)]
+    if not subdomain or "." in subdomain:
+        return None
+    if _BAMBOOHR_SUBDOMAIN_PATTERN.fullmatch(subdomain) is None:
+        return None
+
+    path_parts = [part for part in parsed.path.split("/") if part]
+    if len(path_parts) < 2 or path_parts[0] != "careers":
+        return None
+    job_id = path_parts[1]
+    if not job_id.isdigit():
+        return None
+    return subdomain, job_id
+
+
+def _bamboohr_job_api_url(subdomain: str, job_id: str) -> str:
+    safe_subdomain = subdomain.lower()
+    safe_job_id = urllib.parse.quote(job_id, safe="")
+    return f"https://{safe_subdomain}.bamboohr.com/careers/{safe_job_id}/detail"
+
+
+def _bamboohr_location_text(opening: Mapping[str, Any]) -> str:
+    ats_location = opening.get("atsLocation")
+    if isinstance(ats_location, Mapping):
+        parts = [
+            str(ats_location.get(key) or "").strip()
+            for key in ("city", "state", "country")
+        ]
+        joined = ", ".join(part for part in parts if part)
+        if joined:
+            return joined
+    location = opening.get("location")
+    if isinstance(location, Mapping):
+        parts = [
+            str(location.get(key) or "").strip()
+            for key in ("city", "state", "addressCountry")
+        ]
+        joined = ", ".join(part for part in parts if part)
+        if joined:
+            return joined
+    return ""
+
+
+def _bamboohr_payload_to_text(payload: Mapping[str, Any], *, subdomain: str) -> str:
+    result = payload.get("result")
+    if not isinstance(result, Mapping):
+        return ""
+    opening = result.get("jobOpening")
+    if not isinstance(opening, Mapping):
+        return ""
+
+    parts: list[str] = []
+    title = str(opening.get("jobOpeningName") or "").strip()
+    if title:
+        parts.append(title)
+    company_name = " ".join(
+        part[:1].upper() + part[1:]
+        for part in subdomain.replace("_", "-").split("-")
+        if part
+    )
+    if company_name:
+        parts.append(company_name)
+    location_name = _bamboohr_location_text(opening)
+    if location_name:
+        parts.append(location_name)
+    department = str(opening.get("departmentLabel") or "").strip()
+    if department:
+        parts.append(department)
+    employment = str(opening.get("employmentStatusLabel") or "").strip()
+    if employment:
+        parts.append(employment)
+    description = str(opening.get("description") or "").strip()
+    if description:
+        parts.append(html_to_text(html.unescape(description)))
+    return _normalize_text("\n\n".join(parts))
+
+
+def fetch_bamboohr_job_description(
+    subdomain: str,
+    job_id: str,
+    *,
+    timeout_seconds: int = 30,
+) -> str:
+    """Fetch a BambooHR posting via the public ``/careers/{id}/detail`` JSON feed."""
+    api_url = _bamboohr_job_api_url(subdomain, job_id)
+    request = urllib.request.Request(
+        api_url,
+        headers={"User-Agent": _USER_AGENT, "Accept": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+            payload = response.read(_MAX_RESPONSE_BYTES)
+    except urllib.error.HTTPError:
+        return ""
+    payload_data = json.loads(payload.decode("utf-8"))
+    if not isinstance(payload_data, dict):
+        return ""
+    return _bamboohr_payload_to_text(payload_data, subdomain=subdomain)
+
+
 def fetch_greenhouse_job_description(
     board_token: str,
     job_id: str,
@@ -314,6 +434,17 @@ def fetch_job_description(url: str, *, timeout_seconds: int = 30) -> str:
         return ""
 
     cleaned_url = url.strip()
+    bamboohr_reference = parse_bamboohr_job_reference(cleaned_url)
+    if bamboohr_reference is not None:
+        subdomain, job_id = bamboohr_reference
+        bamboohr_description = fetch_bamboohr_job_description(
+            subdomain,
+            job_id,
+            timeout_seconds=timeout_seconds,
+        )
+        if bamboohr_description:
+            return bamboohr_description
+
     description = _fetch_html_job_description(cleaned_url, timeout_seconds=timeout_seconds)
     if description:
         return description

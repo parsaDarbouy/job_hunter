@@ -13,11 +13,13 @@ from typing import Any, Mapping
 
 
 _MAX_RESPONSE_BYTES = 2_000_000
+_MAX_ASHBY_JOB_BOARD_RESPONSE_BYTES = 20_000_000
 _SKIPPED_TAGS = {"script", "style", "noscript", "svg"}
 _GREENHOUSE_BOARD_HOSTS = frozenset({"boards.greenhouse.io", "job-boards.greenhouse.io"})
 _WORKDAY_JOBS_HOST_SUFFIX = ".myworkdayjobs.com"
 _BAMBOOHR_HOST_SUFFIX = ".bamboohr.com"
 _BAMBOOHR_SUBDOMAIN_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
+_ASHBY_JOBS_HOST = "jobs.ashbyhq.com"
 _META_DESCRIPTION_KEYS = frozenset(
     {"description", "og:description", "twitter:description"},
 )
@@ -389,6 +391,82 @@ def fetch_bamboohr_job_description(
     return _bamboohr_payload_to_text(payload_data, subdomain=subdomain)
 
 
+def parse_ashby_job_reference(url: str) -> tuple[str, str] | None:
+    """
+    Return ``(organization_slug, job_id)`` for Ashby job board URLs.
+
+    Example::
+      https://jobs.ashbyhq.com/elevenlabs/2a99d0a0-adae-41b5-a7ef-f1d3faee60a7
+      https://jobs.ashbyhq.com/elevenlabs/2a99d0a0-adae-41b5-a7ef-f1d3faee60a7/application
+    """
+    parsed = urllib.parse.urlparse(url.strip())
+    if not parsed.netloc:
+        return None
+
+    host = parsed.netloc.lower()
+    if host.startswith("www."):
+        host = host[4:]
+    if host != _ASHBY_JOBS_HOST:
+        return None
+
+    path_parts = [part for part in parsed.path.split("/") if part]
+    if len(path_parts) < 2:
+        return None
+    return path_parts[0], path_parts[1]
+
+
+def _ashby_job_board_api_url(organization_slug: str) -> str:
+    safe_slug = urllib.parse.quote(organization_slug, safe="")
+    return f"https://api.ashbyhq.com/posting-api/job-board/{safe_slug}"
+
+
+def _ashby_job_to_text(job: Mapping[str, Any], *, organization_slug: str) -> str:
+    parts: list[str] = []
+    title = str(job.get("title") or "").strip()
+    if title:
+        parts.append(title)
+    parts.append(organization_slug)
+    for key in ("location", "department", "team", "employmentType"):
+        value = str(job.get(key) or "").strip()
+        if value:
+            parts.append(value)
+    description = str(job.get("descriptionPlain") or "").strip()
+    if not description:
+        description = html_to_text(html.unescape(str(job.get("descriptionHtml") or "")))
+    if description:
+        parts.append(description)
+    return _normalize_text("\n\n".join(parts))
+
+
+def fetch_ashby_job_description(
+    organization_slug: str,
+    job_id: str,
+    *,
+    timeout_seconds: int = 30,
+) -> str:
+    """Fetch an Ashby posting via the public posting API job board feed."""
+    api_url = _ashby_job_board_api_url(organization_slug)
+    request = urllib.request.Request(
+        api_url,
+        headers={"User-Agent": _USER_AGENT, "Accept": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+            payload = response.read(_MAX_ASHBY_JOB_BOARD_RESPONSE_BYTES)
+    except urllib.error.HTTPError:
+        return ""
+    payload_data = json.loads(payload.decode("utf-8"))
+    if not isinstance(payload_data, dict):
+        return ""
+    jobs = payload_data.get("jobs")
+    if not isinstance(jobs, list):
+        return ""
+    for job in jobs:
+        if isinstance(job, Mapping) and str(job.get("id") or "") == job_id:
+            return _ashby_job_to_text(job, organization_slug=organization_slug)
+    return ""
+
+
 def fetch_greenhouse_job_description(
     board_token: str,
     job_id: str,
@@ -444,6 +522,17 @@ def fetch_job_description(url: str, *, timeout_seconds: int = 30) -> str:
         )
         if bamboohr_description:
             return bamboohr_description
+
+    ashby_reference = parse_ashby_job_reference(cleaned_url)
+    if ashby_reference is not None:
+        organization_slug, job_id = ashby_reference
+        ashby_description = fetch_ashby_job_description(
+            organization_slug,
+            job_id,
+            timeout_seconds=timeout_seconds,
+        )
+        if ashby_description:
+            return ashby_description
 
     description = _fetch_html_job_description(cleaned_url, timeout_seconds=timeout_seconds)
     if description:

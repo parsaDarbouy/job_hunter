@@ -7,11 +7,13 @@ from unittest.mock import patch
 
 from job_hunter.job_filtering.job_page_text import (
     extract_html_meta_description,
+    fetch_ashby_job_description,
     fetch_bamboohr_job_description,
     fetch_greenhouse_job_description,
     fetch_job_description,
     fetch_workday_job_description,
     html_to_text,
+    parse_ashby_job_reference,
     parse_bamboohr_job_reference,
     parse_greenhouse_job_reference,
     parse_workday_job_reference,
@@ -299,3 +301,79 @@ def test_fetch_job_description_uses_bamboohr_json_instead_of_spa_chrome() -> Non
     assert "Senior Cloud Engineer" in text
     assert "BambooHR API description" in text
     assert text != "BambooHR"
+
+
+def test_parse_ashby_job_reference_from_job_url() -> None:
+    assert parse_ashby_job_reference(
+        "https://jobs.ashbyhq.com/elevenlabs/2a99d0a0-adae-41b5-a7ef-f1d3faee60a7",
+    ) == ("elevenlabs", "2a99d0a0-adae-41b5-a7ef-f1d3faee60a7")
+
+
+def test_parse_ashby_job_reference_from_application_path() -> None:
+    assert parse_ashby_job_reference(
+        "https://jobs.ashbyhq.com/elevenlabs/2a99d0a0-adae-41b5-a7ef-f1d3faee60a7/application",
+    ) == ("elevenlabs", "2a99d0a0-adae-41b5-a7ef-f1d3faee60a7")
+
+
+def test_parse_ashby_job_reference_returns_none_for_other_urls() -> None:
+    assert parse_ashby_job_reference("https://boards.greenhouse.io/acme/jobs/1") is None
+    assert parse_ashby_job_reference("https://jobs.ashbyhq.com/elevenlabs") is None
+
+
+def test_fetch_ashby_job_description_selects_job_by_id() -> None:
+    payload = {
+        "jobs": [
+            {"id": "other-id", "title": "Account Executive", "descriptionPlain": "Sell things."},
+            {
+                "id": "job-123",
+                "title": "Site Reliability Engineer",
+                "location": "London",
+                "team": "Infrastructure",
+                "descriptionPlain": "Operate Kubernetes clusters.",
+            },
+        ],
+    }
+
+    def fake_urlopen(request, timeout=30):
+        assert request.full_url == "https://api.ashbyhq.com/posting-api/job-board/elevenlabs"
+        return _FakeHttpResponse(
+            json.dumps(payload).encode("utf-8"),
+            content_type="application/json",
+        )
+
+    with patch("job_hunter.job_filtering.job_page_text.urllib.request.urlopen", fake_urlopen):
+        text = fetch_ashby_job_description("elevenlabs", "job-123")
+
+    assert "Site Reliability Engineer" in text
+    assert "London" in text
+    assert "Infrastructure" in text
+    assert "Kubernetes" in text
+    assert "Sell things" not in text
+
+
+def test_fetch_job_description_uses_ashby_api_instead_of_spa_title() -> None:
+    ashby_payload = {
+        "jobs": [
+            {
+                "id": "job-123",
+                "title": "Site Reliability Engineer",
+                "descriptionHtml": "<p>Ashby API description</p>",
+            },
+        ],
+    }
+
+    def fake_urlopen(request, timeout=30):
+        if "api.ashbyhq.com" in request.full_url:
+            return _FakeHttpResponse(
+                json.dumps(ashby_payload).encode("utf-8"),
+                content_type="application/json",
+            )
+        return _FakeHttpResponse(
+            b"<html><head><title>Site Reliability Engineer @ ElevenLabs</title></head></html>",
+        )
+
+    with patch("job_hunter.job_filtering.job_page_text.urllib.request.urlopen", fake_urlopen):
+        text = fetch_job_description("https://jobs.ashbyhq.com/elevenlabs/job-123")
+
+    assert "Ashby API description" in text
+    assert text != "Site Reliability Engineer @ ElevenLabs"
